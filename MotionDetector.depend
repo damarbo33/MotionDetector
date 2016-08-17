@@ -1,0 +1,125 @@
+# depslib dependency file v1.0
+1471432597 source:c:\github\proyectos\motiondetector\main.cpp
+	<iostream>
+	"motion.h"
+
+1471433602 source:c:\github\proyectos\motiondetector\src\motion.cpp
+	"motion.h"
+	"math.h"
+	"image/uiimgencoder.h"
+
+1471432310 c:\github\proyectos\motiondetector\src\motion.h
+	"SDL/SDL.h"
+	"ImagenGestor.h"
+
+1471420960 c:\github\externallibs\uiobjects\src\imagengestor.h
+	"Fileio.h"
+	"SHA1.h"
+	"ListaSimple.h"
+	"Excepcion.h"
+	"Dirutil.h"
+	"SDL/SDL.h"
+	"SDL/SDL_image.h"
+	"SDL/SDL_rotozoom.h"
+	"common.h"
+
+1433746723 c:\github\externallibs\uiobjects\src\fileio.h
+	<iostream>
+	<fstream>
+	<string>
+	<algorithm>
+	<vector>
+	<iterator>
+	"Excepcion.h"
+	"Traza.h"
+
+1445247084 c:\github\externallibs\uiobjects\src\excepcion.h
+	<iostream>
+	<cmath>
+	"Traza.h"
+	"Constant.h"
+
+1398697644 c:\github\externallibs\uiobjects\src\traza.h
+	<stdio.h>
+	<time.h>
+	<string>
+	<limits.h>
+	<iostream>
+	<fstream>
+	"Constant.h"
+
+1470043445 c:\github\externallibs\uiobjects\src\constant.h
+	<fstream>
+	<sstream>
+	<string.h>
+	<vector>
+	<typeinfo>
+	<ctime>
+	<dirent.h>
+	<stdio.h>
+	<limits.h>
+	<algorithm>
+	<cctype>
+	<iomanip>
+	<cstddef>
+	<stdint.h>
+	<windows.h>
+
+1386695698 c:\github\externallibs\uiobjects\src\sha1.h
+	<memory.h>
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+
+1461135089 c:\github\externallibs\uiobjects\src\listasimple.h
+	<string.h>
+	<stdio.h>
+	"Excepcion.h"
+	"Fileio.h"
+	<typeinfo>
+	"Constant.h"
+	"fileprops.h"
+
+1401208624 c:\github\externallibs\uiobjects\src\fileprops.h
+	<string>
+
+1462536181 c:\github\externallibs\uiobjects\src\dirutil.h
+	"fileprops.h"
+	<dirent.h>
+	<sys/stat.h>
+	<sys/types.h>
+	<unistd.h>
+	"Traza.h"
+	"ListaSimple.h"
+	<stdio.h>
+	<windows.h>
+
+1459872931 c:\github\externallibs\uiobjects\src\common.h
+
+1433425332 c:\github\externallibs\uiobjects\src\image\uiimgencoder.h
+	<SDL/SDL.h>
+	<stdlib.h>
+	<stdio.h>
+	<setjmp.h>
+	<jpeglib.h>
+	<jerror.h>
+	"SDL_imagesave/IMG_saveend.h"
+	<iostream>
+
+1433412280 c:\github\externallibs\libjpeg\src\libjpeg\jpeglib.h
+	"jconfig.h"
+	"jmorecfg.h"
+	"jpegint.h"
+	"jerror.h"
+
+1433491523 c:\github\externallibs\libjpeg\src\libjpeg\jconfig.h
+
+1433413563 c:\github\externallibs\libjpeg\src\libjpeg\jmorecfg.h
+
+1433413563 c:\github\externallibs\libjpeg\src\libjpeg\jpegint.h
+
+877179550 c:\github\externallibs\libjpeg\src\libjpeg\jerror.h
+
+1369139268 c:\github\externallibs\uiobjects\src\image\sdl_imagesave\img_saveend.h
+	<SDL/SDL_byteorder.h>
+
