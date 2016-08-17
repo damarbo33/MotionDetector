@@ -5,8 +5,8 @@
 Motion::Motion(){
     backgroundFrame = NULL;
     currentFrame = NULL;
-    differenceThreshold = 600;
-    noiseFilterSize = 11;
+    differenceThreshold = 15;
+    noiseFilterSize = 3;
     step1Image = NULL;
     step2Image = NULL;
 }
@@ -22,8 +22,8 @@ Motion::~Motion()
 void Motion::iniciarPrueba(){
     ImagenGestor imGestor;
 
-    imGestor.loadImgFromFile("ims\\actualFrame.jpg", &currentFrame);
-    imGestor.loadImgFromFile("ims\\background.jpg", &backgroundFrame);
+    imGestor.loadImgFromFile("ims\\1.bmp", &currentFrame);
+    imGestor.loadImgFromFile("ims\\2.bmp", &backgroundFrame);
 
     if (currentFrame != NULL && backgroundFrame != NULL){
         cout << "Images Loaded" << endl;
@@ -57,6 +57,8 @@ void Motion::diferenceFilter(){
     background = SDL_MapRGB(step1Image->format, cNegro.r,cNegro.g,cNegro.b);
 
     Uint32 pixelBack, pixelcurrent;
+//    SDL_Surface *grey1Image = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 24, rmask, gmask, bmask, amask);
+//    SDL_Surface *grey2Image = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 24, rmask, gmask, bmask, amask);
 
     //first-pass: difference and threshold filter (mark the pixels that are changed between two frames)
     for (int x = 0; x < width; x++)
@@ -68,13 +70,18 @@ void Motion::diferenceFilter(){
              SDL_GetRGB(imGestor.getpixel(currentFrame, x, y), currentFrame->format, &r, &g, &b);
              pixelcurrent = (r+g+b)/3;
 
-             Uint32 diff = abs(pixelBack - pixelcurrent);
+//             imGestor.putpixel(grey1Image, x, y, pixelBack);
+//             imGestor.putpixel(grey2Image, x, y, pixelcurrent);
+
+             int diff = abs(pixelBack - pixelcurrent);
              imGestor.putpixel(step1Image, x, y, diff >= differenceThreshold ? foreground : background);
          }
     }
 
     UIImageEncoder imEncoder;
-    imEncoder.IMG_SaveJPG("step1Image.jpg", step1Image, 80);
+    imEncoder.IMG_SaveJPG("step1Image.jpg", step1Image, 95);
+//    imEncoder.IMG_SaveJPG("grey1Image.jpg", grey1Image, 95);
+//    imEncoder.IMG_SaveJPG("grey2Image.jpg", grey2Image, 95);
 }
 
 /**
@@ -123,6 +130,6 @@ void Motion::erosionFilter(){
     }
 
     UIImageEncoder imEncoder;
-    imEncoder.IMG_SaveJPG("step2Image.jpg", step2Image, 80);
+    imEncoder.IMG_SaveJPG("step2Image.jpg", step2Image, 95);
 }
 
