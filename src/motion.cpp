@@ -143,21 +143,23 @@ void Motion::erosionFilter(){
 * Recorremos step2Image y modificamos el valor de los pixeles en la surface
 * pasada por parametro
 */
-void Motion::showDiffFilter(SDL_Surface *finalImage){
+Uint32 Motion::showDiffFilter(SDL_Surface *finalImage){
     int width = (int)step2Image->w;
     int height = (int)step2Image->h;
 
     foreground = SDL_MapRGB(step2Image->format, cBlanco.r,cBlanco.g,cBlanco.b);
     background = SDL_MapRGB(step2Image->format, cNegro.r,cNegro.g,cNegro.b);
     Uint32 moveShape = SDL_MapRGB(finalImage->format, cRojo.r,cRojo.g,cRojo.b);
-
+    Uint32 diferences = 0;
     for (int x = 0; x < width; x++){
         for (int y = 0; y < height; y++){
             if (imGestor.getpixel(step2Image, x, y) == foreground){
                 imGestor.putpixel(finalImage, x, y, moveShape);
+                diferences++;
             }
         }
     }
+    return diferences;
 }
 
 Uint32 Motion::getGrayScale(Uint32 source_color){

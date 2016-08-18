@@ -11,11 +11,11 @@
 	<SDL/SDL_mutex.h>
 	<vlc/vlc.h>
 
-1471524494 source:c:\github\proyectos\motiondetector\src\motion.cpp
+1471525167 source:c:\github\proyectos\motiondetector\src\motion.cpp
 	"motion.h"
 	"math.h"
 
-1471524773 c:\github\proyectos\motiondetector\src\motion.h
+1471525182 c:\github\proyectos\motiondetector\src\motion.h
 	"SDL/SDL.h"
 	"ImagenGestor.h"
 	"image/uiimgencoder.h"

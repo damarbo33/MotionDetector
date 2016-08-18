@@ -23,7 +23,7 @@ class Motion
         void diferenceFilter();
         void diferenceFilter(SDL_Surface *varBackground, SDL_Surface *varCurrent);
         void erosionFilter();
-        void showDiffFilter(SDL_Surface *finalImage);
+        Uint32 showDiffFilter(SDL_Surface *finalImage);
 
 
         void setDifferenceThreshold(int var){

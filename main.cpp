@@ -56,7 +56,7 @@ struct ctx
 
 static SDL_Surface *backgroundFrame = NULL;
 static SDL_Surface *currentFrame = NULL;
-static int nFrames = 0;
+static Uint32 nFrames = 0;
 static Motion *motionDetector;
 static UIImageEncoder imEncoder;
 static ImagenGestor imGestor;
@@ -86,13 +86,6 @@ static void unlock(void *data, void *id, void *const *p_pixels)
 //            else
 //                pixels[y * VIDEOWIDTH + x] = 0x0;
 //
-    SDL_Rect rect;
-    rect.x = 90;
-    rect.y = 90;
-    rect.w = 20;
-    rect.h = 20;
-
-//    SDL_FillRect( cotx->surf, &rect, SDL_MapRGB(cotx->surf->format, cRojo.r, cRojo.g, cRojo.b) );
 
     if (nFrames > 0){
         //Guardamos la imagen anterior para que sea el fondo sobre el que basar el movimiento
@@ -130,14 +123,6 @@ static void unlock(void *data, void *id, void *const *p_pixels)
         motionDetector->diferenceFilter(backgroundFrame, currentFrame);
         motionDetector->erosionFilter();
         motionDetector->showDiffFilter(cotx->surf);
-
-//        SDL_FillRect( currentFrame, &rect, SDL_MapRGB(currentFrame->format, cRojo.r, cRojo.g, cRojo.b) );
-//        imEncoder.IMG_SaveJPG("origen.jpg", currentFrame, 95);
-//        currentFrame = SDL_CreateRGBSurface(SDL_SWSURFACE, cotx->surf->w, cotx->surf->h, 24,
-//                                            cotx->surf->format->Rmask,
-//                                            cotx->surf->format->Gmask,
-//                                            cotx->surf->format->Bmask,
-//                                            cotx->surf->format->Amask);
     }
 
     nFrames++;
