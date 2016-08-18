@@ -1,16 +1,24 @@
 # depslib dependency file v1.0
-1471432597 source:c:\github\proyectos\motiondetector\main.cpp
+1471524636 source:c:\github\proyectos\motiondetector\main.cpp
 	<iostream>
 	"motion.h"
+	<stdio.h>
+	<stdint.h>
+	<math.h>
+	<stdlib.h>
+	<assert.h>
+	<SDL/SDL.h>
+	<SDL/SDL_mutex.h>
+	<vlc/vlc.h>
 
-1471433602 source:c:\github\proyectos\motiondetector\src\motion.cpp
+1471524494 source:c:\github\proyectos\motiondetector\src\motion.cpp
 	"motion.h"
 	"math.h"
-	"image/uiimgencoder.h"
 
-1471432310 c:\github\proyectos\motiondetector\src\motion.h
+1471524773 c:\github\proyectos\motiondetector\src\motion.h
 	"SDL/SDL.h"
 	"ImagenGestor.h"
+	"image/uiimgencoder.h"
 
 1471420960 c:\github\externallibs\uiobjects\src\imagengestor.h
 	"Fileio.h"
@@ -122,4 +130,84 @@
 
 1369139268 c:\github\externallibs\uiobjects\src\image\sdl_imagesave\img_saveend.h
 	<SDL/SDL_byteorder.h>
+
+1384199304 c:\program files (x86)\codeblocks\externallibs\libvlc\sdk\include\vlc\vlc.h
+	<vlc/libvlc_structures.h>
+	<vlc/libvlc.h>
+	<vlc/libvlc_media.h>
+	<vlc/libvlc_media_player.h>
+	<vlc/libvlc_media_list.h>
+	<vlc/libvlc_media_list_player.h>
+	<vlc/libvlc_media_library.h>
+	<vlc/libvlc_media_discoverer.h>
+	<vlc/libvlc_events.h>
+	<vlc/libvlc_vlm.h>
+	<vlc/deprecated.h>
+
+1384199304 c:\program files (x86)\codeblocks\externallibs\libvlc\sdk\include\vlc\libvlc_structures.h
+	<stdint.h>
+
+1384199304 c:\program files (x86)\codeblocks\externallibs\libvlc\sdk\include\vlc\libvlc.h
+	<stdio.h>
+	<stdarg.h>
+	<vlc/libvlc_structures.h>
+
+1384199304 c:\program files (x86)\codeblocks\externallibs\libvlc\sdk\include\vlc\libvlc_media.h
+
+1384199304 c:\program files (x86)\codeblocks\externallibs\libvlc\sdk\include\vlc\libvlc_media_player.h
+	<stdbool.h>
+
+1384199304 c:\program files (x86)\codeblocks\externallibs\libvlc\sdk\include\vlc\libvlc_media_list.h
+
+1384199304 c:\program files (x86)\codeblocks\externallibs\libvlc\sdk\include\vlc\libvlc_media_list_player.h
+
+1384199304 c:\program files (x86)\codeblocks\externallibs\libvlc\sdk\include\vlc\libvlc_media_library.h
+
+1384199304 c:\program files (x86)\codeblocks\externallibs\libvlc\sdk\include\vlc\libvlc_media_discoverer.h
+
+1384199304 c:\program files (x86)\codeblocks\externallibs\libvlc\sdk\include\vlc\libvlc_events.h
+
+1384199304 c:\program files (x86)\codeblocks\externallibs\libvlc\sdk\include\vlc\libvlc_vlm.h
+
+1384199304 c:\program files (x86)\codeblocks\externallibs\libvlc\sdk\include\vlc\deprecated.h
+
+1464792123 c:\github\externallibs\vlc-2.2.4\sdk\include\vlc\vlc.h
+	<vlc/libvlc_structures.h>
+	<vlc/libvlc.h>
+	<vlc/libvlc_media.h>
+	<vlc/libvlc_media_player.h>
+	<vlc/libvlc_media_list.h>
+	<vlc/libvlc_media_list_player.h>
+	<vlc/libvlc_media_library.h>
+	<vlc/libvlc_media_discoverer.h>
+	<vlc/libvlc_events.h>
+	<vlc/libvlc_vlm.h>
+	<vlc/deprecated.h>
+
+1464792123 c:\github\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_structures.h
+	<stdint.h>
+
+1464792123 c:\github\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc.h
+	<stdio.h>
+	<stdarg.h>
+	<vlc/libvlc_structures.h>
+
+1464792123 c:\github\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_media.h
+
+1464792123 c:\github\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_media_player.h
+	<stdbool.h>
+
+1464792123 c:\github\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_media_list.h
+
+1464792123 c:\github\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_media_list_player.h
+
+1464792123 c:\github\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_media_library.h
+
+1464792123 c:\github\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_media_discoverer.h
+
+1464792123 c:\github\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_events.h
+
+1464792123 c:\github\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_vlm.h
+
+1464792123 c:\github\externallibs\vlc-2.2.4\sdk\include\vlc\deprecated.h
 

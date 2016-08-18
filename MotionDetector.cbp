@@ -9,7 +9,7 @@
 			<Target title="Debug">
 				<Option output="bin/Debug/MotionDetector" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
-				<Option type="1" />
+				<Option type="0" />
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
@@ -27,6 +27,7 @@
 					<Add directory="../rijndael" />
 					<Add directory="../httpCurl/httpcurl/src/jsoncpp-0.10.5/include" />
 					<Add directory="src" />
+					<Add directory="../../ExternalLibs/vlc-2.2.4/sdk/include" />
 				</Compiler>
 				<Linker>
 					<Add option="-lsqllite" />
@@ -54,6 +55,10 @@
 					<Add option="-lgumboParser" />
 					<Add option="-lws2_32" />
 					<Add library="../../ExternalLibs/libjpeg/bin/Release/libjpeg.a" />
+					<Add library="../../ExternalLibs/vlc-2.2.4/sdk/lib/libvlc.lib" />
+					<Add library="../../ExternalLibs/vlc-2.2.4/sdk/lib/libvlccore.lib" />
+					<Add library="../../ExternalLibs/vlc-2.2.4/sdk/lib/vlc.lib" />
+					<Add library="../../ExternalLibs/vlc-2.2.4/sdk/lib/vlccore.lib" />
 					<Add directory="../../ExternalLibs/UIObjects/bin/Release" />
 					<Add directory="../../ExternalLibs/zipUtils/bin/Release" />
 					<Add directory="../../ExternalLibs/sqllite/bin/Release" />
@@ -61,6 +66,7 @@
 					<Add directory="../httpCurl/httpcurl/bin/Release" />
 					<Add directory="../../ExternalLibs/curl-7.40.0-devel-mingw32/lib" />
 					<Add directory="../../ExternalLibs/tidy/bin/Release" />
+					<Add directory="../../../Program Files (x86)/Codeblocks/ExternalLibs/libvlc/sdk/lib" />
 				</Linker>
 			</Target>
 			<Target title="Release">
