@@ -6,9 +6,6 @@
 #include "image/uiimgencoder.h"
 
 
-static Uint32 background;
-static Uint32 foreground;
-
 class tArrBlobPos{
     public:
 
@@ -37,7 +34,9 @@ class Motion
         void diferenceFilter(SDL_Surface *varBackground, SDL_Surface *varCurrent);
         void erosionFilter();
         Uint32 showDiffFilter(SDL_Surface *finalImage);
+
         Uint32 showBlobsFilter(SDL_Surface *finalImage);
+        Uint32 showBlobsFilter(SDL_Surface *finalImage, SDL_Surface *binaryImage);
 
 
         void setDifferenceThreshold(int var){
@@ -47,7 +46,7 @@ class Motion
             noiseFilterSize = var;
         }
 
-        Uint32 blobAnalysis(SDL_Surface *finalImage, SDL_Surface *binaryImage);
+        Uint32 blobAnalysis(SDL_Surface *binaryImage, vector <tArrBlobPos> *v);
 
 
     protected:
@@ -68,6 +67,9 @@ class Motion
         SDL_Surface * step1Image;
         SDL_Surface * step2Image;
         ImagenGestor imGestor;
+
+        Uint32 background;
+        Uint32 foreground;
 };
 
 #endif // MOTION_H

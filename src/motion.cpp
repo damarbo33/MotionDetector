@@ -1,7 +1,6 @@
 #include "motion.h"
 #include "math.h"
 
-
 Motion::Motion(){
     backgroundFrame = NULL;
     currentFrame = NULL;
@@ -66,7 +65,7 @@ void Motion::diferenceFilter(SDL_Surface *varBackground, SDL_Surface *varCurrent
     int width = (int)varBackground->w;
     int height = (int)varBackground->h;
 
-    Uint8 r, g, b, a;
+    Uint8 r, g, b;
     Uint32 pixelBack, pixelcurrent;
 //    SDL_Surface *grey1Image = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 24, rmask, gmask, bmask, amask);
 //    SDL_Surface *grey2Image = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 24, rmask, gmask, bmask, amask);
@@ -85,10 +84,6 @@ void Motion::diferenceFilter(SDL_Surface *varBackground, SDL_Surface *varCurrent
 //             imGestor.putpixel(grey2Image, x, y, getGrayScale(imGestor.getpixel(varCurrent, x, y)));
 
              int diff = abs(pixelBack - pixelcurrent);
-             if (diff >= differenceThreshold){
-                //cout << diff << endl;
-                int x = 0;
-             }
              imGestor.putpixel(step1Image, x, y, diff >= differenceThreshold ? foreground : background);
          }
     }
@@ -164,138 +159,162 @@ Uint32 Motion::showDiffFilter(SDL_Surface *finalImage){
 }
 
 Uint32 Motion::showBlobsFilter(SDL_Surface *finalImage){
-    return blobAnalysis(finalImage, step2Image);
+    return showBlobsFilter(finalImage, step2Image);
 }
 
 /**
-* Detecta el numero de objetos en una imagen
+* Despues de aplicar diferenceFilter y erosionFilter, tenemos en step2Image
+* las diferencias del movimiento de la imagen en el color blanco.
+* Recorremos step2Image y modificamos el valor de los pixeles en la surface
+* pasada por parametro
+*/
+Uint32 Motion::showBlobsFilter(SDL_Surface *finalImage, SDL_Surface *binaryImage){
+    vector <tArrBlobPos> v;
+    Uint32 nObjs = blobAnalysis(binaryImage, &v);
+    if (finalImage != NULL){
+        for (int i=0; i < nObjs; i++){
+            drawRectLine(finalImage,v.at(i).minX, v.at(i).minY,
+            v.at(i).maxX,v.at(i).maxY, cRojo,1);
+        }
+    }
+    return nObjs;
+}
+
+/**
+* Detecta el numero de objetos en una imagen mediante "The Sequential Grass-Fire Algorithm"
 * http://what-when-how.com/introduction-to-video-and-image-processing/blob-analysis-introduction-to-video-and-image-processing-part-1/
 *
 */
-Uint32 Motion::blobAnalysis(SDL_Surface *finalImage, SDL_Surface *binaryImage){
-    int width = (int)binaryImage->w;
-    int height = (int)binaryImage->h;
-    int arrBlob[width][height];
-    memset(arrBlob, 0, width*height*sizeof(int));
-    vector<int> lista;
-    foreground = SDL_MapRGB(binaryImage->format, cBlanco.r,cBlanco.g,cBlanco.b);
-    background = SDL_MapRGB(binaryImage->format, cNegro.r,cNegro.g,cNegro.b);
-    int tmpX = 0;
-    int tmpY = 0;
-    int valXlist = 0;
-    int valYlist = 0;
-    int posLista = 0;
-    int nObj = 0;
-    bool found = false;
+Uint32 Motion::blobAnalysis(SDL_Surface *binaryImage, vector <tArrBlobPos> *v){
+    int detectedObj = 0;
 
-//    Uint32 moveShape[8];
-//
-//    moveShape[0] = SDL_MapRGB(finalImage->format, cRojo.r,cRojo.g,cRojo.b);
-//    moveShape[1] = SDL_MapRGB(finalImage->format, cVerde.r,cVerde.g,cVerde.b);
-//    moveShape[2] = SDL_MapRGB(finalImage->format, cAmarillo.r,cAmarillo.g,cAmarillo.b);
-//    moveShape[3] = SDL_MapRGB(finalImage->format, cAzulTotal.r,cAzulTotal.g,cAzulTotal.b);
-//    moveShape[4] = SDL_MapRGB(finalImage->format, cNaranja.r,cNaranja.g,cNaranja.b);
-//    moveShape[5] = SDL_MapRGB(finalImage->format, cTurquesa.r,cTurquesa.g,cTurquesa.b);
-//    moveShape[6] = SDL_MapRGB(finalImage->format, cGrisClaro.r,cGrisClaro.g,cGrisClaro.b);
-//    moveShape[7] = SDL_MapRGB(finalImage->format, cAzulOscuro.r,cAzulOscuro.g,cAzulOscuro.b);
+    if (binaryImage != NULL){
+        int width = (int)binaryImage->w;
+        int height = (int)binaryImage->h;
+        //En arrBlob almacenamos el numero de objeto que le corresponde a cada pixel
+        Uint16 arrBlob[width][height];
+        memset(arrBlob, 0, width*height*sizeof(Uint16));
 
+        vector<int> lista;
+        foreground = SDL_MapRGB(binaryImage->format, cBlanco.r,cBlanco.g,cBlanco.b);
+        background = SDL_MapRGB(binaryImage->format, cNegro.r,cNegro.g,cNegro.b);
+        int tmpX = 0;
+        int tmpY = 0;
+        int valXlist = 0;
+        int valYlist = 0;
+        int nObj = 0;
+        bool found = false;
 
+    //    Uint32 moveShape[8];
+    //    moveShape[0] = SDL_MapRGB(finalImage->format, cRojo.r,cRojo.g,cRojo.b);
+    //    moveShape[1] = SDL_MapRGB(finalImage->format, cVerde.r,cVerde.g,cVerde.b);
+    //    moveShape[2] = SDL_MapRGB(finalImage->format, cAmarillo.r,cAmarillo.g,cAmarillo.b);
+    //    moveShape[3] = SDL_MapRGB(finalImage->format, cAzulTotal.r,cAzulTotal.g,cAzulTotal.b);
+    //    moveShape[4] = SDL_MapRGB(finalImage->format, cNaranja.r,cNaranja.g,cNaranja.b);
+    //    moveShape[5] = SDL_MapRGB(finalImage->format, cTurquesa.r,cTurquesa.g,cTurquesa.b);
+    //    moveShape[6] = SDL_MapRGB(finalImage->format, cGrisClaro.r,cGrisClaro.g,cGrisClaro.b);
+    //    moveShape[7] = SDL_MapRGB(finalImage->format, cAzulOscuro.r,cAzulOscuro.g,cAzulOscuro.b);
+        int maxShapes = pow(2, sizeof(arrBlob) / sizeof(arrBlob[0]));
 
-    for (int y = 0; y < height; y++){
-        for (int x = 0; x < width; x++){
-            if (getSafePixel(binaryImage, x, y, background) == foreground){
-                nObj++;
-                arrBlob[x][y] = nObj;
-                imGestor.putpixel(binaryImage, x, y, background);
-                found = true;
-            } else {
-                found = false;
-            }
+        for (int y = 0; y < height && nObj < maxShapes-1; y++){
+            for (int x = 0; x < width && nObj < maxShapes-1; x++){
+                if (getSafePixel(binaryImage, x, y, background) == foreground){
+                    nObj++;
+                    arrBlob[x][y] = nObj;
+                    imGestor.putpixel(binaryImage, x, y, background);
+                    found = true;
+                } else {
+                    found = false;
+                }
 
-            if (found){
-                do{
-                    if (lista.size() == 0){
-                        valXlist = x;
-                        valYlist = y;
-                    } else {
-                        valXlist = lista.at(0);
-                        valYlist = lista.at(1);
-                        // erase the first 2 elements:
-                        lista.erase (lista.begin(), lista.begin()+2);
-                    }
+                if (found){
+                    do{
+                        if (lista.size() == 0){
+                            valXlist = x;
+                            valYlist = y;
+                        } else {
+                            valXlist = lista.at(0);
+                            valYlist = lista.at(1);
+                            // erase the first 2 elements:
+                            lista.erase (lista.begin(), lista.begin()+2);
+                        }
 
-                    tmpX = valXlist+1;
-                    tmpY = valYlist;
-                    if (getSafePixel(binaryImage, tmpX, tmpY, background) == foreground){
-                        lista.push_back(tmpX);
-                        lista.push_back(tmpY);
-                        arrBlob[tmpX][tmpY] = nObj;
-                        imGestor.putpixel(binaryImage, tmpX, tmpY, background);
-                    }
+                        tmpX = valXlist+1;
+                        tmpY = valYlist;
+                        if (getSafePixel(binaryImage, tmpX, tmpY, background) == foreground){
+                            lista.push_back(tmpX);
+                            lista.push_back(tmpY);
+                            arrBlob[tmpX][tmpY] = nObj;
+                            imGestor.putpixel(binaryImage, tmpX, tmpY, background);
+                        }
 
-                    tmpX = valXlist-1;
-                    tmpY = valYlist;
-                    if (getSafePixel(binaryImage, tmpX, tmpY, background) == foreground){
-                        lista.push_back(tmpX);
-                        lista.push_back(tmpY);
-                        arrBlob[tmpX][tmpY] = nObj;
-                        imGestor.putpixel(binaryImage, tmpX, tmpY, background);
-                    }
+                        tmpX = valXlist-1;
+                        tmpY = valYlist;
+                        if (getSafePixel(binaryImage, tmpX, tmpY, background) == foreground){
+                            lista.push_back(tmpX);
+                            lista.push_back(tmpY);
+                            arrBlob[tmpX][tmpY] = nObj;
+                            imGestor.putpixel(binaryImage, tmpX, tmpY, background);
+                        }
 
-                    tmpX = valXlist;
-                    tmpY = valYlist+1;
-                    if (getSafePixel(binaryImage, tmpX, tmpY, background) == foreground){
-                        lista.push_back(tmpX);
-                        lista.push_back(tmpY);
-                        arrBlob[tmpX][tmpY] = nObj;
-                        imGestor.putpixel(binaryImage, tmpX, tmpY, background);
-                    }
+                        tmpX = valXlist;
+                        tmpY = valYlist+1;
+                        if (getSafePixel(binaryImage, tmpX, tmpY, background) == foreground){
+                            lista.push_back(tmpX);
+                            lista.push_back(tmpY);
+                            arrBlob[tmpX][tmpY] = nObj;
+                            imGestor.putpixel(binaryImage, tmpX, tmpY, background);
+                        }
 
-                    tmpX = valXlist;
-                    tmpY = valYlist-1;
-                    if (getSafePixel(binaryImage, tmpX, tmpY, background) == foreground){
-                        lista.push_back(tmpX);
-                        lista.push_back(tmpY);
-                        arrBlob[tmpX][tmpY] = nObj;
-                        imGestor.putpixel(binaryImage, tmpX, tmpY, background);
-                    }
+                        tmpX = valXlist;
+                        tmpY = valYlist-1;
+                        if (getSafePixel(binaryImage, tmpX, tmpY, background) == foreground){
+                            lista.push_back(tmpX);
+                            lista.push_back(tmpY);
+                            arrBlob[tmpX][tmpY] = nObj;
+                            imGestor.putpixel(binaryImage, tmpX, tmpY, background);
+                        }
 
-                } while (lista.size() > 0);
-            }
-        }
-    }
-
-    tArrBlobPos arrayBlobPos[nObj];
-
-    //Buscamos los limites de cada campo detectado
-    for (int y = 0; y < height; y++){
-        for (int x = 0; x < width; x++){
-            if (arrBlob[x][y] >= 1){
-//                if (arrBlob[x][y]-1 < 7)
-//                imGestor.putpixel(finalImage, x, y, moveShape[arrBlob[x][y]-1]);
-                if (arrayBlobPos[arrBlob[x][y]-1].maxX == -1 || x > arrayBlobPos[arrBlob[x][y]-1].maxX ){
-                    arrayBlobPos[arrBlob[x][y]-1].maxX = x;
-                } else if (arrayBlobPos[arrBlob[x][y]-1].maxY == -1 || y > arrayBlobPos[arrBlob[x][y]-1].maxY ){
-                    arrayBlobPos[arrBlob[x][y]-1].maxY = y;
-                } else if (arrayBlobPos[arrBlob[x][y]-1].minX == -1 || x < arrayBlobPos[arrBlob[x][y]-1].minX ){
-                    arrayBlobPos[arrBlob[x][y]-1].minX = x;
-                } else if (arrayBlobPos[arrBlob[x][y]-1].minY == -1 || y < arrayBlobPos[arrBlob[x][y]-1].minY ){
-                    arrayBlobPos[arrBlob[x][y]-1].minY = y;
+                    } while (lista.size() > 0);
                 }
             }
         }
-    }
-    int detectedObj = 0;
-    //Pintamos rectangulos para encuadrar cada objeto
-    for (int i=0; i < nObj; i++){
-        if (arrayBlobPos[i].minX >= 0 && arrayBlobPos[i].minY >= 0 &&
-            arrayBlobPos[i].maxX >= 0 && arrayBlobPos[i].maxY >= 0){
-                detectedObj++;
-                drawRectLine(finalImage,arrayBlobPos[i].minX, arrayBlobPos[i].minY,
-                    arrayBlobPos[i].maxX,arrayBlobPos[i].maxY, cRojo,1);
-            }
-    }
 
+        tArrBlobPos arrayBlobPos[nObj];
+        //Buscamos los limites de cada campo detectado
+        for (int y = 0; y < height; y++){
+            for (int x = 0; x < width; x++){
+                if (arrBlob[x][y] >= 1){
+    //                if (arrBlob[x][y]-1 < 7)
+    //                imGestor.putpixel(finalImage, x, y, moveShape[arrBlob[x][y]-1]);
+                    if (arrayBlobPos[arrBlob[x][y]-1].maxX == -1 || x > arrayBlobPos[arrBlob[x][y]-1].maxX ){
+                        arrayBlobPos[arrBlob[x][y]-1].maxX = x;
+                    }
+                    if (arrayBlobPos[arrBlob[x][y]-1].minX == -1 || x < arrayBlobPos[arrBlob[x][y]-1].minX ){
+                        arrayBlobPos[arrBlob[x][y]-1].minX = x;
+                    }
+                    if (arrayBlobPos[arrBlob[x][y]-1].maxY == -1 || y > arrayBlobPos[arrBlob[x][y]-1].maxY ){
+                        arrayBlobPos[arrBlob[x][y]-1].maxY = y;
+                    }
+                    if (arrayBlobPos[arrBlob[x][y]-1].minY == -1 || y < arrayBlobPos[arrBlob[x][y]-1].minY ){
+                        arrayBlobPos[arrBlob[x][y]-1].minY = y;
+                    }
+                }
+            }
+        }
+        //Pintamos rectangulos para encuadrar cada objeto
+        for (int i=0; i < nObj; i++){
+            if (arrayBlobPos[i].minX >= 0 && arrayBlobPos[i].minY >= 0 &&
+                arrayBlobPos[i].maxX >= 0 && arrayBlobPos[i].maxY >= 0 &&
+                (abs(arrayBlobPos[i].minX - arrayBlobPos[i].maxX)
+                  * abs(arrayBlobPos[i].minY - arrayBlobPos[i].maxY)) > minimumBlobArea){
+                    detectedObj++;
+                    v->push_back(arrayBlobPos[i]);
+    //                drawRectLine(finalImage,arrayBlobPos[i].minX, arrayBlobPos[i].minY,
+    //                    arrayBlobPos[i].maxX,arrayBlobPos[i].maxY, cRojo,1);
+                }
+        }
+    }
     return detectedObj;
 }
 

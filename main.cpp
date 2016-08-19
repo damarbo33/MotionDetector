@@ -13,12 +13,14 @@ using namespace std;
 //        SDL_Surface *procesedShapes;
 //
 //        ImagenGestor imGestor;
-//        imGestor.loadImgFromFile("step2Image2.jpg", &shapes);
+//        imGestor.loadImgFromFile("step2invImage.jpg", &shapes);
 //        cout << "BitsPerPixel " << (int)shapes->format->BitsPerPixel << endl;
 //
 //        procesedShapes = SDL_CreateRGBSurface(SDL_SWSURFACE, shapes->w, shapes->h, 24, 0,0,0,0);
 //        SDL_BlitSurface(shapes, NULL, procesedShapes, NULL);
-//        cout << "Detected objects: " << motionDetector->blobAnalysis(procesedShapes, shapes) << endl;
+//        vector <tArrBlobPos> v;
+//        cout << "Detected objects: " << motionDetector->showBlobsFilter(procesedShapes, shapes) << endl;
+//
 //        UIImageEncoder imEncoder;
 //        imEncoder.IMG_SaveJPG("Shapes.jpg", procesedShapes, 95);
 //
@@ -102,7 +104,7 @@ static void unlock(void *data, void *id, void *const *p_pixels)
     struct ctx *cotx = (ctx *)data;
 
     /* VLC just rendered the video, but we can also render stuff */
-    uint16_t *pixels = (uint16_t *)*p_pixels;
+//    uint16_t *pixels = (uint16_t *)*p_pixels;
     int x, y;
 //
 //    for(y = 10; y < 40; y++)
@@ -138,7 +140,7 @@ static void unlock(void *data, void *id, void *const *p_pixels)
     }
 
     if (nFrames > 0){
-        uint16_t *dstPixels = (uint16_t *)currentFrame->pixels;
+//        uint16_t *dstPixels = (uint16_t *)currentFrame->pixels;
 
         for(y = 0; y < cotx->surf->h; y++)
             for(x = 0; x < cotx->surf->w; x++)
@@ -197,7 +199,8 @@ int main(int argc, char *argv[])
     SDL_Surface *screen, *empty;
     SDL_Event event;
     SDL_Rect rect;
-    int done = 0, action = 0, pause = 0, n = 0;
+    int done = 0, action = 0, pause = 0;
+    //int n = 0;
 
     struct ctx ctx;
 
@@ -307,7 +310,6 @@ int main(int argc, char *argv[])
 
         SDL_Flip(screen);
         //SDL_Delay(10);
-
         SDL_BlitSurface(empty, NULL, screen, &rect);
     }
 
