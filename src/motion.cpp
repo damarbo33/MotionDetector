@@ -1,12 +1,13 @@
 #include "motion.h"
 #include "math.h"
 
+
 Motion::Motion(){
     backgroundFrame = NULL;
     currentFrame = NULL;
-    differenceThreshold = 15;
+    differenceThreshold = 25;
     noiseFilterSize = 3;
-    minimumBlobArea = 150;
+    minimumBlobArea = 20;
     step1Image = NULL;
     step2Image = NULL;
 
@@ -23,7 +24,7 @@ void Motion::iniciarSurfaces(int w, int h){
     if (step1Image != NULL){
         SDL_FreeSurface(step1Image);
     }
-    step1Image = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 24, 0,0,0,0);
+    step1Image = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 16, 0,0,0,0);
 
     foreground = SDL_MapRGB(step1Image->format, cBlanco.r,cBlanco.g,cBlanco.b);
     background = SDL_MapRGB(step1Image->format, cNegro.r,cNegro.g,cNegro.b);
@@ -31,7 +32,7 @@ void Motion::iniciarSurfaces(int w, int h){
     if (step2Image != NULL){
         SDL_FreeSurface(step2Image);
     }
-    step2Image = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 24, 0,0,0,0);
+    step2Image = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 16, 0,0,0,0);
 }
 
 /**
@@ -65,27 +66,33 @@ void Motion::diferenceFilter(SDL_Surface *varBackground, SDL_Surface *varCurrent
     int width = (int)varBackground->w;
     int height = (int)varBackground->h;
 
-    Uint8 r, g, b;
-    Uint32 pixelBack, pixelcurrent;
-//    SDL_Surface *grey1Image = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 24, rmask, gmask, bmask, amask);
-//    SDL_Surface *grey2Image = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 24, rmask, gmask, bmask, amask);
+    Uint8 r = 0, g = 0, b = 0;
+    Uint32 pixelBack = 0, pixelcurrent = 0;
+    uint16_t pixBack = 0, pixcurrent = 0;
+    uint16_t *dstPixels = (uint16_t *)step1Image->pixels;
+    uint16_t *backPixels = (uint16_t *)varBackground->pixels;
+    uint16_t *currPixels = (uint16_t *)varCurrent->pixels;
+
+    SDL_Surface *grey1Image = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 16, rmask, gmask, bmask, amask);
+    uint16_t *grey1Pixels = (uint16_t *)grey1Image->pixels;
 
     //first-pass: difference and threshold filter (mark the pixels that are changed between two frames)
-    for (int x = 0; x < width; x++)
-    {
-         for (int y = 0; y < height; y++)
-         {
-             SDL_GetRGB(imGestor.getpixel(varBackground, x, y), varBackground->format, &r, &g, &b);
-             pixelBack = (r+g+b)/3;
-             SDL_GetRGB(imGestor.getpixel(varCurrent, x, y), varCurrent->format, &r, &g, &b);
-             pixelcurrent = (r+g+b)/3;
+    int i = 0;
+    uint16_t diff = 0;
+    while (i < width*height){
+        r = ((backPixels[i] & red_mask) >> 11) << 3;
+        g = ((backPixels[i] & green_mask) >> 5) << 2;
+        b = ((backPixels[i] & blue_mask)) << 3;
+        pixBack = (r+g+b)/3;
 
-//             imGestor.putpixel(grey1Image, x, y, getGrayScale(imGestor.getpixel(varBackground, x, y)));
-//             imGestor.putpixel(grey2Image, x, y, getGrayScale(imGestor.getpixel(varCurrent, x, y)));
-
-             int diff = abs(pixelBack - pixelcurrent);
-             imGestor.putpixel(step1Image, x, y, diff >= differenceThreshold ? foreground : background);
-         }
+        r = ((currPixels[i] & red_mask) >> 11) << 3;
+        g = ((currPixels[i] & green_mask) >> 5) << 2;
+        b = ((currPixels[i] & blue_mask)) << 3;
+        pixcurrent = (r+g+b)/3;
+        //grey1Pixels[i] = pixBack;
+        diff = pixBack > pixcurrent ? pixBack - pixcurrent : pixcurrent - pixBack;
+        dstPixels[i] = diff >= differenceThreshold ? foreground : background;
+        i++;
     }
 
 //    UIImageEncoder imEncoder;
@@ -103,9 +110,18 @@ void Motion::erosionFilter(){
     SDL_FillRect(step2Image, NULL, background);
     SDL_BlitSurface(step1Image, NULL, step2Image, NULL);
 
+    uint16_t *dstPixels = (uint16_t *)step2Image->pixels;
+    uint16_t *srcPixels = (uint16_t *)step1Image->pixels;
+
     //second-pass: erosion filter (remove noise i.e. ignore minor differences between two frames)
     int m = noiseFilterSize;
     int n = (m - 1) / 2; //'m' will be an odd number always
+
+//    int i=0;
+//    while(i < width*height){
+//        dstPixels[i] = srcPixels[i];
+//        i++;
+//    }
 
     for (int x = 0; x < width; x++)
     {
@@ -115,16 +131,16 @@ void Motion::erosionFilter(){
             int marked = 0;
             for (int i = x - n; i < x + n; i++)
                 for (int j = y - n; j < y + n; j++)
-                    //cout << i << "," << j << endl;
                     if (i < width && j < height && i >= 0 && j >= 0)
-                    marked += imGestor.getpixel(step1Image, i, j) == foreground ? 1 : 0;
+                    marked += srcPixels[j * width + i] == 0xFFFF ? 1 : 0;
 
             if (marked >= m) //if atleast half the number of pixels are marked, then mark the full window
             {
                 for (int i = x - n; i < x + n; i++)
                     for (int j = y - n; j < y + n; j++)
                         if (i < width && j < height && i >= 0 && j >= 0)
-                        imGestor.putpixel(step2Image, i, j, foreground);
+                            imGestor.putpixel(step2Image, i, j, foreground);
+                            //dstPixels[i+j*width] = foreground;
             }
         }
     }
@@ -147,14 +163,20 @@ Uint32 Motion::showDiffFilter(SDL_Surface *finalImage){
     background = SDL_MapRGB(step2Image->format, cNegro.r,cNegro.g,cNegro.b);
     Uint32 moveShape = SDL_MapRGB(finalImage->format, cRojo.r,cRojo.g,cRojo.b);
     Uint32 diferences = 0;
-    for (int x = 0; x < width; x++){
-        for (int y = 0; y < height; y++){
-            if (imGestor.getpixel(step2Image, x, y) == foreground){
-                imGestor.putpixel(finalImage, x, y, moveShape);
-                diferences++;
-            }
+
+    uint16_t *dstPixels = (uint16_t *)finalImage->pixels;
+    uint16_t *srcPixels = (uint16_t *)step2Image->pixels;
+
+    int i = 0;
+    while (i < width*height){
+        if (srcPixels[i] == foreground){
+            dstPixels[i] = moveShape;
+            diferences++;
         }
+        i++;
     }
+
+
     return diferences;
 }
 
@@ -216,12 +238,21 @@ Uint32 Motion::blobAnalysis(SDL_Surface *binaryImage, vector <tArrBlobPos> *v){
     //    moveShape[7] = SDL_MapRGB(finalImage->format, cAzulOscuro.r,cAzulOscuro.g,cAzulOscuro.b);
         int maxShapes = pow(2, sizeof(arrBlob) / sizeof(arrBlob[0]));
 
-        for (int y = 0; y < height && nObj < maxShapes-1; y++){
-            for (int x = 0; x < width && nObj < maxShapes-1; x++){
-                if (getSafePixel(binaryImage, x, y, background) == foreground){
+        //uint16_t *dstPixels = (uint16_t *)finalImage->pixels;
+        uint16_t *srcPixels = (uint16_t *)binaryImage->pixels;
+
+        int i = 0;
+        uint16_t diff = 0;
+        int x = 0, y = 0;
+        while (i < width*height && nObj < maxShapes-1){
+            x = i % width;
+            y = i / width;
+//        for (int y = 0; y < height && nObj < maxShapes-1; y++){
+//            for (int x = 0; x < width && nObj < maxShapes-1; x++){
+                if (srcPixels[i] == foreground){
                     nObj++;
                     arrBlob[x][y] = nObj;
-                    imGestor.putpixel(binaryImage, x, y, background);
+                    srcPixels[i] = background;
                     found = true;
                 } else {
                     found = false;
@@ -277,8 +308,9 @@ Uint32 Motion::blobAnalysis(SDL_Surface *binaryImage, vector <tArrBlobPos> *v){
 
                     } while (lista.size() > 0);
                 }
+                i++;
             }
-        }
+//        }
 
         tArrBlobPos arrayBlobPos[nObj];
         //Buscamos los limites de cada campo detectado

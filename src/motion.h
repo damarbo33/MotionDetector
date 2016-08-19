@@ -5,6 +5,9 @@
 #include "ImagenGestor.h"
 #include "image/uiimgencoder.h"
 
+static WORD red_mask = 0xF800;
+static WORD green_mask = 0x7E0;
+static WORD blue_mask = 0x1F;
 
 class tArrBlobPos{
     public:
@@ -70,6 +73,7 @@ class Motion
 
         Uint32 background;
         Uint32 foreground;
+
 };
 
 #endif // MOTION_H

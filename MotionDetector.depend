@@ -211,3 +211,175 @@
 
 1464792123 c:\github\externallibs\vlc-2.2.4\sdk\include\vlc\deprecated.h
 
+1471636909 source:d:\github\codeblocks\proyectos\motiondetector\main.cpp
+	<iostream>
+	"motion.h"
+	<stdio.h>
+	<stdint.h>
+	<math.h>
+	<stdlib.h>
+	<assert.h>
+	<SDL/SDL.h>
+	<SDL/SDL_mutex.h>
+	<vlc/vlc.h>
+
+1471636040 d:\github\codeblocks\proyectos\motiondetector\src\motion.h
+	"SDL/SDL.h"
+	"ImagenGestor.h"
+	"image/uiimgencoder.h"
+
+1471615801 d:\github\codeblocks\externallibs\uiobjects\src\imagengestor.h
+	"Fileio.h"
+	"SHA1.h"
+	"ListaSimple.h"
+	"Excepcion.h"
+	"Dirutil.h"
+	"SDL/SDL.h"
+	"SDL/SDL_image.h"
+	"SDL/SDL_rotozoom.h"
+	"common.h"
+
+1461349467 d:\github\codeblocks\externallibs\uiobjects\src\fileio.h
+	<iostream>
+	<fstream>
+	<string>
+	<algorithm>
+	<vector>
+	<iterator>
+	"Excepcion.h"
+	"Traza.h"
+
+1461349467 d:\github\codeblocks\externallibs\uiobjects\src\excepcion.h
+	<iostream>
+	<cmath>
+	"Traza.h"
+	"Constant.h"
+
+1461349467 d:\github\codeblocks\externallibs\uiobjects\src\traza.h
+	<stdio.h>
+	<time.h>
+	<string>
+	<limits.h>
+	<iostream>
+	<fstream>
+	"Constant.h"
+
+1471113306 d:\github\codeblocks\externallibs\uiobjects\src\constant.h
+	<fstream>
+	<sstream>
+	<string.h>
+	<vector>
+	<typeinfo>
+	<ctime>
+	<dirent.h>
+	<stdio.h>
+	<limits.h>
+	<algorithm>
+	<cctype>
+	<iomanip>
+	<cstddef>
+	<stdint.h>
+	<windows.h>
+
+1461349467 d:\github\codeblocks\externallibs\uiobjects\src\sha1.h
+	<memory.h>
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+
+1461349467 d:\github\codeblocks\externallibs\uiobjects\src\listasimple.h
+	<string.h>
+	<stdio.h>
+	"Excepcion.h"
+	"Fileio.h"
+	<typeinfo>
+	"Constant.h"
+	"fileprops.h"
+
+1461349467 d:\github\codeblocks\externallibs\uiobjects\src\fileprops.h
+	<string>
+
+1462693579 d:\github\codeblocks\externallibs\uiobjects\src\dirutil.h
+	"fileprops.h"
+	<dirent.h>
+	<sys/stat.h>
+	<sys/types.h>
+	<unistd.h>
+	"Traza.h"
+	"ListaSimple.h"
+	<stdio.h>
+	<windows.h>
+
+1461349467 d:\github\codeblocks\externallibs\uiobjects\src\common.h
+
+1461349467 d:\github\codeblocks\externallibs\uiobjects\src\image\uiimgencoder.h
+	<SDL/SDL.h>
+	<stdlib.h>
+	<stdio.h>
+	<setjmp.h>
+	<jpeglib.h>
+	<jerror.h>
+	"SDL_imagesave/IMG_saveend.h"
+	<iostream>
+
+1433415880 d:\github\codeblocks\externallibs\libjpeg\src\libjpeg\jpeglib.h
+	"jconfig.h"
+	"jmorecfg.h"
+	"jpegint.h"
+	"jerror.h"
+
+1433495123 d:\github\codeblocks\externallibs\libjpeg\src\libjpeg\jconfig.h
+
+1433417163 d:\github\codeblocks\externallibs\libjpeg\src\libjpeg\jmorecfg.h
+
+1433417163 d:\github\codeblocks\externallibs\libjpeg\src\libjpeg\jpegint.h
+
+877183150 d:\github\codeblocks\externallibs\libjpeg\src\libjpeg\jerror.h
+
+1461349467 d:\github\codeblocks\externallibs\uiobjects\src\image\sdl_imagesave\img_saveend.h
+	<SDL/SDL_byteorder.h>
+
+1464794083 d:\github\codeblocks\externallibs\vlc-2.2.4\sdk\include\vlc\vlc.h
+	<vlc/libvlc_structures.h>
+	<vlc/libvlc.h>
+	<vlc/libvlc_media.h>
+	<vlc/libvlc_media_player.h>
+	<vlc/libvlc_media_list.h>
+	<vlc/libvlc_media_list_player.h>
+	<vlc/libvlc_media_library.h>
+	<vlc/libvlc_media_discoverer.h>
+	<vlc/libvlc_events.h>
+	<vlc/libvlc_vlm.h>
+	<vlc/deprecated.h>
+
+1464794083 d:\github\codeblocks\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_structures.h
+	<stdint.h>
+
+1464794083 d:\github\codeblocks\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc.h
+	<stdio.h>
+	<stdarg.h>
+	<vlc/libvlc_structures.h>
+
+1464794083 d:\github\codeblocks\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_media.h
+
+1464794083 d:\github\codeblocks\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_media_player.h
+	<stdbool.h>
+
+1464794083 d:\github\codeblocks\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_media_list.h
+
+1464794083 d:\github\codeblocks\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_media_list_player.h
+
+1464794083 d:\github\codeblocks\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_media_library.h
+
+1464794083 d:\github\codeblocks\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_media_discoverer.h
+
+1464794083 d:\github\codeblocks\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_events.h
+
+1464794083 d:\github\codeblocks\externallibs\vlc-2.2.4\sdk\include\vlc\libvlc_vlm.h
+
+1464794083 d:\github\codeblocks\externallibs\vlc-2.2.4\sdk\include\vlc\deprecated.h
+
+1471636863 source:d:\github\codeblocks\proyectos\motiondetector\src\motion.cpp
+	"motion.h"
+	"math.h"
+
