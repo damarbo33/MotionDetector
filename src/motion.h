@@ -9,6 +9,19 @@
 static Uint32 background;
 static Uint32 foreground;
 
+class tArrBlobPos{
+    public:
+
+    tArrBlobPos(){
+        minX = -1;
+        minY = -1;
+        maxX = -1;
+        maxY = -1;
+    }
+
+    int minX, minY, maxX, maxY;
+};
+
 class Motion
 {
     public:
@@ -24,6 +37,7 @@ class Motion
         void diferenceFilter(SDL_Surface *varBackground, SDL_Surface *varCurrent);
         void erosionFilter();
         Uint32 showDiffFilter(SDL_Surface *finalImage);
+        Uint32 showBlobsFilter(SDL_Surface *finalImage);
 
 
         void setDifferenceThreshold(int var){
@@ -33,6 +47,7 @@ class Motion
             noiseFilterSize = var;
         }
 
+        Uint32 blobAnalysis(SDL_Surface *finalImage, SDL_Surface *binaryImage);
 
 
     protected:
@@ -43,10 +58,12 @@ class Motion
 
         SDL_Surface *grayBackgroundFrame;
         SDL_Surface *grayCurrentFrame;
-        int differenceThreshold, noiseFilterSize;
+        int differenceThreshold, noiseFilterSize, minimumBlobArea;
 
         Uint32 getGrayScale(Uint32 source_color);
-
+        Uint32 getSafePixel(SDL_Surface *surface, const int x, const int y, Uint32 bckColor);
+        void Line(SDL_Surface *surface, float x1, float y1, float x2, float y2, const t_color color);
+        void drawRectLine(SDL_Surface *surface, float x0, float y0, float x1, float y1, const t_color color ,int lineWidth);
 
         SDL_Surface * step1Image;
         SDL_Surface * step2Image;

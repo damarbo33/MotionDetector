@@ -9,6 +9,32 @@ using namespace std;
 //    Motion *motionDetector = new Motion();
 //
 //    try{
+//        SDL_Surface *shapes;
+//        SDL_Surface *procesedShapes;
+//
+//        ImagenGestor imGestor;
+//        imGestor.loadImgFromFile("step2Image2.jpg", &shapes);
+//        cout << "BitsPerPixel " << (int)shapes->format->BitsPerPixel << endl;
+//
+//        procesedShapes = SDL_CreateRGBSurface(SDL_SWSURFACE, shapes->w, shapes->h, 24, 0,0,0,0);
+//        SDL_BlitSurface(shapes, NULL, procesedShapes, NULL);
+//        cout << "Detected objects: " << motionDetector->blobAnalysis(procesedShapes, shapes) << endl;
+//        UIImageEncoder imEncoder;
+//        imEncoder.IMG_SaveJPG("Shapes.jpg", procesedShapes, 95);
+//
+//    } catch (Excepcion &e){
+//        cout << e.getMessage();
+//    }
+//    delete motionDetector;
+//
+//    return 0;
+//}
+
+//int main(int argc, char *argv[]){
+//    cout << "Hello world!" << endl;
+//    Motion *motionDetector = new Motion();
+//
+//    try{
 //        motionDetector->iniciarPrueba();
 //        motionDetector->diferenceFilter();
 //        motionDetector->erosionFilter();
@@ -122,7 +148,8 @@ static void unlock(void *data, void *id, void *const *p_pixels)
 
         motionDetector->diferenceFilter(backgroundFrame, currentFrame);
         motionDetector->erosionFilter();
-        motionDetector->showDiffFilter(cotx->surf);
+        //motionDetector->showDiffFilter(cotx->surf);
+        motionDetector->showBlobsFilter(cotx->surf);
     }
 
     nFrames++;
