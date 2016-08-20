@@ -211,7 +211,7 @@
 
 1464792123 c:\github\externallibs\vlc-2.2.4\sdk\include\vlc\deprecated.h
 
-1471636909 source:d:\github\codeblocks\proyectos\motiondetector\main.cpp
+1471714957 source:d:\github\codeblocks\proyectos\motiondetector\main.cpp
 	<iostream>
 	"motion.h"
 	<stdio.h>
@@ -223,7 +223,7 @@
 	<SDL/SDL_mutex.h>
 	<vlc/vlc.h>
 
-1471636040 d:\github\codeblocks\proyectos\motiondetector\src\motion.h
+1471714909 d:\github\codeblocks\proyectos\motiondetector\src\motion.h
 	"SDL/SDL.h"
 	"ImagenGestor.h"
 	"image/uiimgencoder.h"
@@ -379,7 +379,7 @@
 
 1464794083 d:\github\codeblocks\externallibs\vlc-2.2.4\sdk\include\vlc\deprecated.h
 
-1471636863 source:d:\github\codeblocks\proyectos\motiondetector\src\motion.cpp
+1471715927 source:d:\github\codeblocks\proyectos\motiondetector\src\motion.cpp
 	"motion.h"
 	"math.h"
 

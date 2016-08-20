@@ -70,8 +70,8 @@ using namespace std;
 
 #include <vlc/vlc.h>
 
-#define WIDTH 1280
-#define HEIGHT 720
+#define WIDTH 640
+#define HEIGHT 480
 
 #define VIDEOWIDTH WIDTH
 #define VIDEOHEIGHT HEIGHT
@@ -81,9 +81,6 @@ struct ctx
     SDL_Surface *surf;
     SDL_mutex *mutex;
 };
-
-static Uint32 averageTime = 0;
-static Uint32 samples = 0;
 
 static SDL_Surface *backgroundFrame = NULL;
 static SDL_Surface *currentFrame = NULL;
@@ -111,7 +108,7 @@ static void unlock(void *data, void *id, void *const *p_pixels)
 
     /* VLC just rendered the video, but we can also render stuff */
     uint16_t *pixels = (uint16_t *)*p_pixels;
-    int x, y;
+//    int x, y;
 //
 //    for(y = 10; y < 40; y++)
 //        for(x = 10; x < 40; x++)
@@ -152,7 +149,7 @@ static void unlock(void *data, void *id, void *const *p_pixels)
 
         motionDetector->diferenceFilter(backgroundFrame, currentFrame);
         motionDetector->erosionFilter();
-        //motionDetector->showDiffFilter(cotx->surf);
+        motionDetector->showDiffFilter(cotx->surf);
         motionDetector->showBlobsFilter(cotx->surf);
     }
 
@@ -211,7 +208,7 @@ int main(int argc, char *argv[])
         ,"--dshow-aspect-ratio=16:9"
         ,"--dshow-fps=30"
         ,videoRes.c_str()
-        ,"--live-caching=500"
+        ,"--live-caching=0"
     };
     int vlc_argc = sizeof(vlc_argv) / sizeof(*vlc_argv);
 
