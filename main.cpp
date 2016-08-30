@@ -76,19 +76,21 @@ using namespace std;
 #define VIDEOWIDTH WIDTH
 #define VIDEOHEIGHT HEIGHT
 
+
+
 struct ctx
 {
     SDL_Surface *surf;
+    SDL_Surface *bckSurf;
     SDL_mutex *mutex;
 };
 
-static SDL_Surface *backgroundFrame = NULL;
-static SDL_Surface *currentFrame = NULL;
 static Uint32 nFrames = 0;
 static Motion *motionDetector;
 static UIImageEncoder imEncoder;
 static ImagenGestor imGestor;
 static bool saveBackground = true;
+bool okSavedBackground = false;
 
 static void *lock(void *data, void **p_pixels)
 {
@@ -96,13 +98,14 @@ static void *lock(void *data, void **p_pixels)
 
     SDL_LockMutex(cotx->mutex);
     SDL_LockSurface(cotx->surf);
+    SDL_LockSurface(cotx->bckSurf);
     *p_pixels = cotx->surf->pixels;
     return NULL; /* picture identifier, not needed here */
 }
 
 static void unlock(void *data, void *id, void *const *p_pixels)
 {
-    unsigned long init = SDL_GetTicks();
+    //unsigned long init = SDL_GetTicks();
 
     struct ctx *cotx = (ctx *)data;
 
@@ -119,48 +122,40 @@ static void unlock(void *data, void *id, void *const *p_pixels)
 //
 
     if (nFrames > 0 && saveBackground == true){
-    //if (nFrames > 0){
-        //Guardamos la imagen anterior para que sea el fondo sobre el que basar el movimiento
-        //SDL_BlitSurface(currentFrame, NULL, backgroundFrame, NULL);
-        uint16_t *dstPixels = (uint16_t *)backgroundFrame->pixels;
-        uint16_t *srcPixels = (uint16_t *)currentFrame->pixels;
-        int i=0;
-        while (i < currentFrame->h *currentFrame->w){
-            dstPixels[i] = srcPixels[i]; //Solo si la surface es de 16 bits
-            i++;
-        }
-        saveBackground = false;
-    }
-
-    if (nFrames > 0 && backgroundFrame != NULL && currentFrame != NULL){
-        uint16_t *dstPixels = (uint16_t *)currentFrame->pixels;
-
-//        for(y = 0; y < cotx->surf->h; y++)
-//            for(x = 0; x < cotx->surf->w; x++)
-//                //imGestor.putpixel(currentFrame, x, y, imGestor.getpixel(cotx->surf, x, y));
-//                dstPixels[y * VIDEOWIDTH + x] = pixels[y * VIDEOWIDTH + x]; //Solo si la surface es de 16 bits
-        //SDL_BlitSurface(cotx->surf, NULL, currentFrame, NULL);
+        uint16_t *dstPixels = (uint16_t *)cotx->bckSurf->pixels;
         int i=0;
         while (i < cotx->surf->h * cotx->surf->w){
             dstPixels[i] = pixels[i]; //Solo si la surface es de 16 bits
             i++;
         }
+        saveBackground = false;
+    }
 
+    if (nFrames > 0 && cotx->bckSurf != NULL && cotx->surf != NULL){
 
-        motionDetector->diferenceFilter(backgroundFrame, currentFrame);
+        //Doing the diference of two images
+        motionDetector->diferenceFilter(cotx->bckSurf, cotx->surf);
+        //Joining areas with a minimal number of changes
         motionDetector->erosionFilter();
+        //Updating the background dinamically every 10 frames
+        if (nFrames % 10 == 0){
+            motionDetector->backgroundSubtraction(cotx->bckSurf, cotx->surf);
+        }
+        //Showing the diferences in the screen
         motionDetector->showDiffFilter(cotx->surf);
+        //Showing the objects detected in the screen
         motionDetector->showBlobsFilter(cotx->surf);
     }
 
     nFrames++;
 
     SDL_UnlockSurface(cotx->surf);
+    SDL_UnlockSurface(cotx->bckSurf);
     SDL_UnlockMutex(cotx->mutex);
 
     assert(id == NULL); /* picture identifier, not needed here */
 
-    cout << "time: " << SDL_GetTicks() - init << " ms" << endl;
+    //cout << "time: " << SDL_GetTicks() - init << " ms" << endl;
 }
 
 static void display(void *data, void *id)
@@ -172,24 +167,14 @@ static void display(void *data, void *id)
 
 int main(int argc, char *argv[])
 {
+    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTTHREAD | SDL_INIT_TIMER);
+
     libvlc_instance_t *libvlc;
     libvlc_media_t *m;
     libvlc_media_player_t *mp;
 
-    if (currentFrame != NULL)
-        SDL_FreeSurface(currentFrame);
-
-    if (backgroundFrame != NULL)
-        SDL_FreeSurface(backgroundFrame);
-
-
-    currentFrame = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, 16,
-                                       0,0,0,0);
-
-    backgroundFrame = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, 16,
-                                        0,0,0,0);
-
     string videoRes = "--dshow-size=" + Constant::TipoToStr(VIDEOWIDTH) + "x" + Constant::TipoToStr(VIDEOHEIGHT);
+
     char const *vlc_argv[] =
     {
         //"--no-audio", /* skip any audio track */
@@ -203,7 +188,7 @@ int main(int argc, char *argv[])
         //"--no-inhibit",             // we don't want interfaces
         "--no-disable-screensaver", // we don't want interfaces
         "--no-snapshot-preview"    // no blending in dummy vout
-        ,"-vvv" /* be much more verbose for debugging */
+        //,"-vvv" /* be much more verbose for debugging */
         ,"--no-osd"
         ,"--dshow-aspect-ratio=16:9"
         ,"--dshow-fps=30"
@@ -211,43 +196,20 @@ int main(int argc, char *argv[])
         ,"--live-caching=0"
     };
     int vlc_argc = sizeof(vlc_argv) / sizeof(*vlc_argv);
-
-    SDL_Surface *screen, *empty;
+    SDL_Surface *screen;
     SDL_Event event;
     SDL_Rect rect;
     int done = 0, action = 0, pause = 0;
-    //int n = 0;
-
     struct ctx ctx;
-
-//    if(argc < 2)
-//    {
-//        printf("Usage: %s <filename>\n", argv[0]);
-//        return EXIT_FAILURE;
-//    }
-
-    /*
-     *  Initialise libSDL
-     */
-//    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTTHREAD) == -1){
-//        printf("cannot initialize SDL\n");
-//        return EXIT_FAILURE;
-//    }
 
     motionDetector = new Motion();
     motionDetector->iniciarSurfaces(VIDEOWIDTH, VIDEOHEIGHT);
 
-
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTTHREAD);
-
-    empty = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT,
-                                 16, 0, 0, 0, 0);
-
-    ctx.surf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT,
-                                    16, 0x001f, 0x07e0, 0xf800, 0);
+    //Creating 16bit RGB565 Surfaces
+    ctx.surf    = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, 16, 0x001f, 0x07e0, 0xf800, 0);
+    ctx.bckSurf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, 16, 0x001f, 0x07e0, 0xf800, 0);
 
     ctx.mutex = SDL_CreateMutex();
-
     int options = SDL_ANYFORMAT | SDL_SWSURFACE;
 
     screen = SDL_SetVideoMode(WIDTH, HEIGHT, 0, options);
@@ -270,7 +232,7 @@ int main(int argc, char *argv[])
     libvlc_video_set_callbacks(mp, lock, unlock, display, &ctx);
     libvlc_video_set_format(mp, "RV16", VIDEOWIDTH, VIDEOHEIGHT, VIDEOWIDTH*2);
     libvlc_media_player_play(mp);
-    unsigned long init = SDL_GetTicks();
+    unsigned long inicio = SDL_GetTicks();
 
     /*
      *  Main loop
@@ -313,28 +275,23 @@ int main(int argc, char *argv[])
             break;
         }
 
-        //rect.x = (int)((1. + .5 * sin(0.03 * n)) * (WIDTH - VIDEOWIDTH) / 2);
-        //rect.y = (int)((1. + .5 * cos(0.03 * n)) * (HEIGHT - VIDEOHEIGHT) / 2);
         rect.x = 0;
         rect.y = 0;
-
-        //if(!pause)
-         //   n++;
 
         /* Blitting the surface does not prevent it from being locked and
          * written to by another thread, so we use this additional mutex. */
         SDL_LockMutex(ctx.mutex);
         SDL_BlitSurface(ctx.surf, NULL, screen, &rect);
+        //SDL_BlitSurface(ctx.bckSurf, NULL, screen, &rect);
         SDL_UnlockMutex(ctx.mutex);
 
-        SDL_Flip(screen);
-        //SDL_Delay(10);
-        SDL_BlitSurface(empty, NULL, screen, &rect);
+        if (okSavedBackground)
+            SDL_Flip(screen);
 
-        if (SDL_GetTicks() - init < 6000){
+        if (SDL_GetTicks() > inicio + 3000 && okSavedBackground == false){
             saveBackground = true;
+            okSavedBackground = true;
         }
-
     }
 
     /*
@@ -349,7 +306,7 @@ int main(int argc, char *argv[])
      */
     SDL_DestroyMutex(ctx.mutex);
     SDL_FreeSurface(ctx.surf);
-    SDL_FreeSurface(empty);
+    SDL_FreeSurface(ctx.bckSurf);
 
     SDL_Quit();
 

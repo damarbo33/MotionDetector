@@ -4,15 +4,15 @@
 static bool debug = false;
 
 Motion::Motion(){
-    differenceThreshold = 25;
-    noiseFilterSize = 20;
+    differenceThreshold = 50;
+    noiseFilterSize = 19;
     minimumBlobArea = 20;
+    factorBackground = 0.95;
     stepsImage = NULL;
     tmpImage = NULL;
 }
 
-Motion::~Motion()
-{
+Motion::~Motion(){
     //dtor
 }
 
@@ -22,7 +22,6 @@ void Motion::iniciarSurfaces(int w, int h){
         SDL_FreeSurface(stepsImage);
     }
     stepsImage = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 16, 0,0,0,0);
-
     foreground = SDL_MapRGB(stepsImage->format, cBlanco.r,cBlanco.g,cBlanco.b);
     background = SDL_MapRGB(stepsImage->format, cNegro.r,cNegro.g,cNegro.b);
 
@@ -51,6 +50,8 @@ void Motion::iniciarPrueba(SDL_Surface *backgroundFrame, SDL_Surface *currentFra
         cout << "Error al cargar imagenes" << endl;
     }
 }
+
+
 
 /**
 * http://codeding.com/articles/motion-detection-algorithm
@@ -81,6 +82,7 @@ void Motion::diferenceFilter(SDL_Surface *varBackground, SDL_Surface *varCurrent
         pixcurrent = (r+g+b)/3;
         //grey1Pixels[i] = pixBack;
         diff = pixBack > pixcurrent ? pixBack - pixcurrent : pixcurrent - pixBack;
+		//Creating a binary image with a threshold
         dstPixels[i] = diff >= differenceThreshold ? foreground : background;
         i++;
     }
@@ -105,25 +107,19 @@ void Motion::erosionFilter(){
     int m = noiseFilterSize;
     int n = (m - 1) / 2; //'m' will be an odd number always
 
-//    int i=0;
-//    while(i < width*height){
-//        dstPixels[i] = srcPixels[i];
-//        i++;
-//    }
-
-    for (int x = 0; x < width; x+=n)
+    for (int x = 0; x < width; x+=m-1)
     {
-        for (int y = 0; y < height; y+=n)
+        for (int y = 0; y < height; y+=m-1)
         {
             //count the number of marked pixels in current window
             int marked = 0;
-            for (int i = x - n; i < x + n; i++)
-                for (int j = y - n; j < y + n; j++)
+            for (int i = x - n; i < x + n && marked < n; i++)
+                for (int j = y - n; j < y + n && marked < n; j++)
                     if (i < width && j < height && i >= 0 && j >= 0)
-                    marked += srcPixels[j * width + i] == foreground ? 1 : 0;
+                    marked += srcPixels[i+j*width] == foreground ? 1 : 0;
 
             //if atleast half the number of pixels are marked, then mark the full window
-            if (marked >= m)
+            if (marked >= n)
             {
                 for (int i = x - n; i < x + n; i++)
                     for (int j = y - n; j < y + n; j++)
@@ -138,9 +134,43 @@ void Motion::erosionFilter(){
 }
 
 /**
-* Despues de aplicar diferenceFilter y erosionFilter, tenemos en tmpImage
+*
+* UPDATING THE BACKGROUND DINAMICALLY
+* http://what-when-how.com/introduction-to-video-and-image-processing/segmentation-in-video-data-introduction-to-video-and-image-processing-part-2/
+*/
+void Motion::backgroundSubtraction(SDL_Surface *varBackground, SDL_Surface *varCurrent){
+    Uint8 r,g,b;
+    Uint8 r2,g2,b2;
+    uint16_t *dstPixels = (uint16_t *)varBackground->pixels;
+    uint16_t *pixels = (uint16_t *)varCurrent->pixels;
+
+    int i=0;
+    while (i < varCurrent->h * varCurrent->w){
+//                r = ((dstPixels[i] & red_mask) >> 11) << 3;
+//                g = ((dstPixels[i] & green_mask) >> 5) << 2;
+//                b = ((dstPixels[i] & blue_mask)) << 3;
+//                r2 = ((pixels[i] & red_mask) >> 11) << 3;
+//                g2 = ((pixels[i] & green_mask) >> 5) << 2;
+//                b2 = ((pixels[i] & blue_mask)) << 3;
+//                dstPixels[i] = (r << 11) | (g << 5) | b;
+
+        SDL_GetRGB(dstPixels[i], varBackground->format, &r,&g,&b);
+        SDL_GetRGB(pixels[i], varCurrent->format, &r2,&g2,&b2);
+
+        r = (uint16_t)floor((double) (r * factorBackground) + (double)(1.0 - factorBackground) * r2);
+        g = (uint16_t)floor((double) (g * factorBackground) + (double)(1.0 - factorBackground) * g2);
+        b = (uint16_t)floor((double) (b * factorBackground) + (double)(1.0 - factorBackground) * b2);
+
+        dstPixels[i] = SDL_MapRGB(varBackground->format, r,g,b);
+
+        i++;
+    }
+}
+
+/**
+* Despues de aplicar diferenceFilter y erosionFilter, tenemos en stepsImage
 * las diferencias del movimiento de la imagen en el color blanco.
-* Recorremos tmpImage y modificamos el valor de los pixeles en la surface
+* Recorremos stepsImage y modificamos el valor de los pixeles en la surface
 * pasada por parametro
 */
 Uint32 Motion::showDiffFilter(SDL_Surface *finalImage){
@@ -172,9 +202,9 @@ Uint32 Motion::showBlobsFilter(SDL_Surface *finalImage){
 }
 
 /**
-* Despues de aplicar diferenceFilter y erosionFilter, tenemos en tmpImage
+* Despues de aplicar diferenceFilter y erosionFilter, tenemos en stepsImage
 * las diferencias del movimiento de la imagen en el color blanco.
-* Recorremos tmpImage y modificamos el valor de los pixeles en la surface
+* Recorremos stepsImage y modificamos el valor de los pixeles en la surface
 * pasada por parametro
 */
 Uint32 Motion::showBlobsFilter(SDL_Surface *finalImage, SDL_Surface *binaryImage){
@@ -337,8 +367,7 @@ Uint32 Motion::blobAnalysis(SDL_Surface *binaryImage, vector <tArrBlobPos> *v){
     return detectedObj;
 }
 
-void Motion::drawRectLine(SDL_Surface *surface, float x0, float y0, float x1, float y1, const t_color color ,int lineWidth)
-{
+void Motion::drawRectLine(SDL_Surface *surface, float x0, float y0, float x1, float y1, const t_color color ,int lineWidth){
     if (y0+lineWidth < surface->w)
         for (int i=0;i<lineWidth;i++){
             Line(surface, x0,y0+i, x1, y0+i, color); //Superior
@@ -348,8 +377,7 @@ void Motion::drawRectLine(SDL_Surface *surface, float x0, float y0, float x1, fl
         }
 }
 
-void Motion::Line(SDL_Surface *surface, float x1, float y1, float x2, float y2, const t_color color )
-{
+void Motion::Line(SDL_Surface *surface, float x1, float y1, float x2, float y2, const t_color color ){
     // Bresenham's line algorithm
     const bool steep = (fabs(y2 - y1) > fabs(x2 - x1));
     if(steep)

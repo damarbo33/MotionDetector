@@ -39,6 +39,7 @@ class Motion
         Uint32 showDiffFilter(SDL_Surface *finalImage);
         Uint32 showBlobsFilter(SDL_Surface *finalImage);
         Uint32 showBlobsFilter(SDL_Surface *finalImage, SDL_Surface *binaryImage);
+        void backgroundSubtraction(SDL_Surface *varBackground, SDL_Surface *varCurrent);
 
 
         void setDifferenceThreshold(int var){
@@ -55,6 +56,7 @@ class Motion
 
     private:
         int differenceThreshold, noiseFilterSize, minimumBlobArea;
+        double factorBackground;
         Uint32 getGrayScale(Uint32 source_color);
         Uint32 getSafePixel(SDL_Surface *surface, const int x, const int y, Uint32 bckColor);
         void Line(SDL_Surface *surface, float x1, float y1, float x2, float y2, const t_color color);
