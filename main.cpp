@@ -105,7 +105,7 @@ static void *lock(void *data, void **p_pixels)
 
 static void unlock(void *data, void *id, void *const *p_pixels)
 {
-    //unsigned long init = SDL_GetTicks();
+    unsigned long init = SDL_GetTicks();
 
     struct ctx *cotx = (ctx *)data;
 
@@ -137,8 +137,8 @@ static void unlock(void *data, void *id, void *const *p_pixels)
         motionDetector->diferenceFilter(cotx->bckSurf, cotx->surf);
         //Joining areas with a minimal number of changes
         motionDetector->erosionFilter();
-        //Updating the background dinamically every 10 frames
-        if (nFrames % 10 == 0){
+        //Updating the background dinamically every 100 frames
+        if (nFrames % 100 == 0){
             motionDetector->backgroundSubtraction(cotx->bckSurf, cotx->surf);
         }
         //Showing the diferences in the screen
@@ -155,7 +155,7 @@ static void unlock(void *data, void *id, void *const *p_pixels)
 
     assert(id == NULL); /* picture identifier, not needed here */
 
-    //cout << "time: " << SDL_GetTicks() - init << " ms" << endl;
+    cout << "time: " << SDL_GetTicks() - init << " ms" << endl;
 }
 
 static void display(void *data, void *id)
@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
          * written to by another thread, so we use this additional mutex. */
         SDL_LockMutex(ctx.mutex);
         SDL_BlitSurface(ctx.surf, NULL, screen, &rect);
-        //SDL_BlitSurface(ctx.bckSurf, NULL, screen, &rect);
+//        SDL_BlitSurface(ctx.bckSurf, NULL, screen, &rect);
         SDL_UnlockMutex(ctx.mutex);
 
         if (okSavedBackground)

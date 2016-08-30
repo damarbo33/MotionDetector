@@ -55,19 +55,24 @@ class Motion
     protected:
 
     private:
-        int differenceThreshold, noiseFilterSize, minimumBlobArea;
-        double factorBackground;
+        int differenceThreshold; //Diference in the substraction to consider a object
+        int noiseFilterSize;     //number of diferences to consider an cuadratic area of size "noiseFilterSize" as an object
+        int minimumBlobArea;     //Minimal area to consider as an object
+        double factorBackground; //Factor expressed in % that makes to change the background
+
+        Uint32 background;       //The color to represent nothing
+        Uint32 foreground;       //The color to represent an object
+
         Uint32 getGrayScale(Uint32 source_color);
         Uint32 getSafePixel(SDL_Surface *surface, const int x, const int y, Uint32 bckColor);
         void Line(SDL_Surface *surface, float x1, float y1, float x2, float y2, const t_color color);
         void drawRectLine(SDL_Surface *surface, float x0, float y0, float x1, float y1, const t_color color ,int lineWidth);
 
         SDL_Surface * stepsImage;
-        SDL_Surface * tmpImage;
+        //SDL_Surface * tmpImage;
         ImagenGestor imGestor;
 
-        Uint32 background;
-        Uint32 foreground;
+
 
 };
 

@@ -7,9 +7,9 @@ Motion::Motion(){
     differenceThreshold = 50;
     noiseFilterSize = 19;
     minimumBlobArea = 20;
-    factorBackground = 0.95;
+    factorBackground = 0.80;
     stepsImage = NULL;
-    tmpImage = NULL;
+//    tmpImage = NULL;
 }
 
 Motion::~Motion(){
@@ -25,10 +25,10 @@ void Motion::iniciarSurfaces(int w, int h){
     foreground = SDL_MapRGB(stepsImage->format, cBlanco.r,cBlanco.g,cBlanco.b);
     background = SDL_MapRGB(stepsImage->format, cNegro.r,cNegro.g,cNegro.b);
 
-    if (tmpImage != NULL){
-        SDL_FreeSurface(tmpImage);
-    }
-    tmpImage = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 16, 0,0,0,0);
+//    if (tmpImage != NULL){
+//        SDL_FreeSurface(tmpImage);
+//    }
+//    tmpImage = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 16, 0,0,0,0);
 }
 
 /**
@@ -97,11 +97,11 @@ void Motion::erosionFilter(){
     if (debug) cout << "erosionFilter" << endl;
     int width = (int)stepsImage->w;
     int height = (int)stepsImage->h;
-    SDL_FillRect(tmpImage, NULL, background);
-    SDL_BlitSurface(stepsImage, NULL, tmpImage, NULL);
+    //SDL_FillRect(tmpImage, NULL, background);
+    //SDL_BlitSurface(stepsImage, NULL, tmpImage, NULL);
 
     uint16_t *dstPixels = (uint16_t *)stepsImage->pixels;
-    uint16_t *srcPixels = (uint16_t *)tmpImage->pixels;
+    //uint16_t *srcPixels = (uint16_t *)tmpImage->pixels;
 
     //second-pass: erosion filter (remove noise i.e. ignore minor differences between two frames)
     int m = noiseFilterSize;
@@ -116,7 +116,7 @@ void Motion::erosionFilter(){
             for (int i = x - n; i < x + n && marked < n; i++)
                 for (int j = y - n; j < y + n && marked < n; j++)
                     if (i < width && j < height && i >= 0 && j >= 0)
-                    marked += srcPixels[i+j*width] == foreground ? 1 : 0;
+                    marked += dstPixels[i+j*width] == foreground ? 1 : 0;
 
             //if atleast half the number of pixels are marked, then mark the full window
             if (marked >= n)
@@ -152,16 +152,17 @@ void Motion::backgroundSubtraction(SDL_Surface *varBackground, SDL_Surface *varC
 //                r2 = ((pixels[i] & red_mask) >> 11) << 3;
 //                g2 = ((pixels[i] & green_mask) >> 5) << 2;
 //                b2 = ((pixels[i] & blue_mask)) << 3;
-//                dstPixels[i] = (r << 11) | (g << 5) | b;
+//
 
         SDL_GetRGB(dstPixels[i], varBackground->format, &r,&g,&b);
         SDL_GetRGB(pixels[i], varCurrent->format, &r2,&g2,&b2);
 
-        r = (uint16_t)floor((double) (r * factorBackground) + (double)(1.0 - factorBackground) * r2);
-        g = (uint16_t)floor((double) (g * factorBackground) + (double)(1.0 - factorBackground) * g2);
-        b = (uint16_t)floor((double) (b * factorBackground) + (double)(1.0 - factorBackground) * b2);
+        r = (r * factorBackground) + (double)(1.0 - factorBackground) * r2;
+        g = (g * factorBackground) + (double)(1.0 - factorBackground) * g2;
+        b = (b * factorBackground) + (double)(1.0 - factorBackground) * b2;
 
         dstPixels[i] = SDL_MapRGB(varBackground->format, r,g,b);
+//        dstPixels[i] = (r << 11) | (g << 5) | b;
 
         i++;
     }
