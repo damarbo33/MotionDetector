@@ -133,16 +133,17 @@ static void unlock(void *data, void *id, void *const *p_pixels)
 
     if (nFrames > 0 && cotx->bckSurf != NULL && cotx->surf != NULL){
 
+
         //Doing the diference of two images
         motionDetector->diferenceFilter(cotx->bckSurf, cotx->surf);
         //Joining areas with a minimal number of changes
         motionDetector->erosionFilter();
-        //Updating the background dinamically every 100 frames
-        if (nFrames % 100 == 0){
+        //Updating the background dinamically every 1000 frames
+        if (nFrames % 1000 == 0){
             motionDetector->backgroundSubtraction(cotx->bckSurf, cotx->surf);
         }
         //Showing the diferences in the screen
-        motionDetector->showDiffFilter(cotx->surf);
+        //motionDetector->showDiffFilter(cotx->surf);
         //Showing the objects detected in the screen
         motionDetector->showBlobsFilter(cotx->surf);
 
@@ -159,7 +160,7 @@ static void unlock(void *data, void *id, void *const *p_pixels)
 
     assert(id == NULL); /* picture identifier, not needed here */
 
-    cout << "time: " << SDL_GetTicks() - init << " ms" << endl;
+    cout << "frame: " << nFrames << " time: " << SDL_GetTicks() - init << " ms" << (nFrames % 1000 == 0 ? " updating bakgrouund" : "") <<  endl;
 }
 
 static void display(void *data, void *id)
@@ -171,6 +172,23 @@ static void display(void *data, void *id)
 
 int main(int argc, char *argv[])
 {
+    string appDir = argv[0];
+    int pos = appDir.rfind(Constant::getFileSep());
+    if (pos == string::npos){
+        FILE_SEPARATOR = FILE_SEPARATOR_UNIX;
+        pos = appDir.rfind(FILE_SEPARATOR);
+        tempFileSep[0] = FILE_SEPARATOR;
+    }
+    appDir = appDir.substr(0, pos);
+    if (appDir[appDir.length()-1] == '.'){
+        appDir.substr(0, appDir.rfind(Constant::getFileSep()));
+    }
+    Constant::setAppDir(appDir);
+
+    string rutaTraza = appDir + Constant::getFileSep() + "Traza.txt";
+
+    Traza *traza = new Traza(rutaTraza.c_str());
+
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTTHREAD | SDL_INIT_TIMER);
 
     libvlc_instance_t *libvlc;
@@ -192,7 +210,7 @@ int main(int argc, char *argv[])
         //"--no-inhibit",             // we don't want interfaces
         "--no-disable-screensaver", // we don't want interfaces
         "--no-snapshot-preview"    // no blending in dummy vout
-        //,"-vvv" /* be much more verbose for debugging */
+        ,"-vvv" /* be much more verbose for debugging */
         ,"--no-osd"
         ,"--dshow-aspect-ratio=16:9"
         ,"--dshow-fps=30"
@@ -206,17 +224,6 @@ int main(int argc, char *argv[])
     int done = 0, action = 0, pause = 0;
     struct ctx ctx;
 
-    motionDetector = new Motion();
-    motionDetector->iniciarSurfaces(VIDEOWIDTH, VIDEOHEIGHT);
-
-    //Creating 16bit RGB565 Surfaces
-    ctx.surf    = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, 16,
-                                       red_mask_vlcsurface, green_mask_vlcsurface, blue_mask_vlcsurface, 0);
-
-    ctx.bckSurf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, 16,
-                                       red_mask_vlcsurface, green_mask_vlcsurface, blue_mask_vlcsurface, 0);
-
-    ctx.mutex = SDL_CreateMutex();
     int options = SDL_ANYFORMAT | SDL_SWSURFACE;
 
     screen = SDL_SetVideoMode(WIDTH, HEIGHT, 0, options);
@@ -225,6 +232,18 @@ int main(int argc, char *argv[])
         printf("cannot set video mode\n");
         return EXIT_FAILURE;
     }
+
+    motionDetector = new Motion();
+    motionDetector->iniciarSurfaces(VIDEOWIDTH, VIDEOHEIGHT);
+
+    ctx.mutex = SDL_CreateMutex();
+
+    //Creating 16bit RGB565 Surfaces
+    ctx.surf    = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, 16,
+                                       red_mask_vlcsurface, green_mask_vlcsurface, blue_mask_vlcsurface, 0);
+
+    ctx.bckSurf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, 16,
+                                       red_mask_vlcsurface, green_mask_vlcsurface, blue_mask_vlcsurface, 0);
 
     /*
      *  Initialise libVLC

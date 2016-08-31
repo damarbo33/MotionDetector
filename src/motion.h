@@ -21,9 +21,14 @@ class tArrBlobPos{
         minY = -1;
         maxX = -1;
         maxY = -1;
+        meanR = 0;
+        meanG = 0;
+        meanB = 0;
     }
-
     int minX, minY, maxX, maxY;
+    Uint32 meanR;
+    Uint32 meanG;
+    Uint32 meanB;
 };
 
 class Motion
@@ -54,7 +59,7 @@ class Motion
             noiseFilterSize = var;
         }
 
-        Uint32 blobAnalysis(SDL_Surface *binaryImage, vector <tArrBlobPos> *v);
+        Uint32 blobAnalysis(SDL_Surface *finalImage, SDL_Surface *binaryImage, vector <tArrBlobPos> *v);
 
 
     protected:
@@ -69,18 +74,13 @@ class Motion
         Uint32 foreground;       //The color to represent an object
         Uint32 difColour;
 
-        Uint32 getGrayScale(Uint32 source_color);
         Uint32 getSafePixel(SDL_Surface *surface, const int x, const int y, Uint32 bckColor);
         void Line(SDL_Surface *surface, float x1, float y1, float x2, float y2, const t_color color);
         void drawRectLine(SDL_Surface *surface, float x0, float y0, float x1, float y1, const t_color color ,int lineWidth);
 
-
         SDL_Surface * stepsImage;
         //SDL_Surface * tmpImage;
         ImagenGestor imGestor;
-
-
-
 };
 
 #endif // MOTION_H

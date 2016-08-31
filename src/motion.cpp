@@ -4,12 +4,11 @@
 static bool debug = false;
 
 Motion::Motion(){
-    differenceThreshold = 10;
+    differenceThreshold = 80;
     noiseFilterSize = 19;
     minimumBlobArea = 20;
-    factorBackground = 0.75;
+    factorBackground = 0.80;
     stepsImage = NULL;
-//    tmpImage = NULL;
 }
 
 Motion::~Motion(){
@@ -21,6 +20,7 @@ void Motion::iniciarSurfaces(int w, int h){
     if (stepsImage != NULL){
         SDL_FreeSurface(stepsImage);
     }
+
     stepsImage = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 16, red_mask_vlcsurface,
                                       green_mask_vlcsurface, blue_mask_vlcsurface,0);
 
@@ -76,33 +76,39 @@ void Motion::diferenceFilter(SDL_Surface *varBackground, SDL_Surface *varCurrent
     int i = 0;
     uint16_t diff = 0;
     while (i < width*height){
+        r = ((backPixels[i] & red_mask_b) >> 11) << 3;
+        g = ((backPixels[i] & green_mask_b) >> 5) << 2;
+        b = (backPixels[i] & blue_mask_b) << 3;
 
-        r = (backPixels[i] & red_mask_b) >> 11;
-        g = (backPixels[i] & green_mask_b) >> 5;
-        b = backPixels[i] & blue_mask_b;
 //        SDL_GetRGB(backPixels[i], varBackground->format, &r,&g,&b);
-        pixBack = (r+g+b)/3;
+        //Obtenemos la media de los 3 valores para obtener un pixel gris
+        //pixBack = (r+g+b)/3;
+         pixBack = (0.3 * r) + (0.59 * g) + (0.11 * b);
 
-        r = (currPixels[i] & red_mask_b) >> 11;
-        g = (currPixels[i] & green_mask_b) >> 5;
-        b = currPixels[i] & blue_mask_b;
+        //El desplazamiento a derechas 11,5 es para obtener los valores
+        //en formato rgb565 directamente del pixel en formato 16bits.
+        //El desplazamiento a izquierda 3,2,3 es para convertir al formato
+        //rgb de 0 bits por color
+        r = ((currPixels[i] & red_mask_b) >> 11) << 3;
+        g = ((currPixels[i] & green_mask_b) >> 5) << 2;
+        b = (currPixels[i] & blue_mask_b) << 3;
 
 //        SDL_GetRGB(currPixels[i], varCurrent->format, &r3,&g3,&b3);
-        pixcurrent = (r+g+b)/3;
-
-//        uint16_t prev = currPixels[i];
-//
-//        r = (currPixels[i] & red_mask_b) >> 11;
-//        g = (currPixels[i] & green_mask_b) >> 5;
-//        b = currPixels[i] & blue_mask_b;
-//        uint16_t recRGB = (r << 11) | (g << 5) | b;
+        //Obtenemos la media de los 3 valores para obtener un pixel gris
+        //pixcurrent = (r+g+b)/3;
+        pixcurrent = (0.3 * r) + (0.59 * g) + (0.11 * b);
 
         diff = pixBack > pixcurrent ? pixBack - pixcurrent : pixcurrent - pixBack;
 		//Creating a binary image with a threshold
         dstPixels[i] = diff >= differenceThreshold ? foreground : background;
-        //dstPixels[i] = (pixcurrent << 11) | (pixcurrent << 5) | pixcurrent;
-        //dstPixels[i] = (r << 11) | (g << 5) | b;
-        //dstPixels[i] = (r << 11);
+        /*
+        //Para obtener una imagen en gris, primero devolvemos al formato rgb565
+        r = pixcurrent >> 3;
+        g = pixcurrent >> 2;
+        b = pixcurrent >> 3;
+        //Y desplazamos los bits correspondiendo al formato 16bits RGB565
+        dstPixels[i] = (r << 11) | (g << 5) | b;
+        */
         i++;
     }
 //    UIImageEncoder imEncoder;
@@ -158,30 +164,33 @@ void Motion::erosionFilter(){
 * http://what-when-how.com/introduction-to-video-and-image-processing/segmentation-in-video-data-introduction-to-video-and-image-processing-part-2/
 */
 void Motion::backgroundSubtraction(SDL_Surface *varBackground, SDL_Surface *varCurrent){
-    Uint8 r,g,b;
-    Uint8 r2,g2,b2;
+    if (debug) cout << "backgroundSubtraction" << endl;
+    uint8_t r=0,g=0,b=0;
+    uint8_t r1=0,g1=0,b1=0;
+    uint8_t r2=0,g2=0,b2=0;
+
     uint16_t *dstPixels = (uint16_t *)varBackground->pixels;
     uint16_t *pixels = (uint16_t *)varCurrent->pixels;
 
     int i=0;
     while (i < varCurrent->h * varCurrent->w){
-//        SDL_GetRGB(dstPixels[i], varBackground->format, &r,&g,&b);
+//        SDL_GetRGB(dstPixels[i], varBackground->format, &r1,&g1,&b1);
 //        SDL_GetRGB(pixels[i], varCurrent->format, &r2,&g2,&b2);
 
-        r = (dstPixels[i] & red_mask_b) >> 11;
-        g = (dstPixels[i] & green_mask_b) >> 5;
-        b = dstPixels[i] & blue_mask_b;
+        r1 = ((dstPixels[i] & red_mask_b) >> 11) << 3;
+        g1 = ((dstPixels[i] & green_mask_b) >> 5) << 2;
+        b1 = (dstPixels[i] & blue_mask_b) << 3;
 
-        r2 = (pixels[i] & red_mask_b) >> 11;
-        g2 = (pixels[i] & green_mask_b) >> 5;
-        b2 = pixels[i] & blue_mask_b;
+        r2 = ((pixels[i] & red_mask_b) >> 11) << 3;
+        g2 = ((pixels[i] & green_mask_b) >> 5) << 2;
+        b2 = (pixels[i] & blue_mask_b) << 3;
 
-        r = (r * factorBackground) + (double)(1.0 - factorBackground) * r2;
-        g = (g * factorBackground) + (double)(1.0 - factorBackground) * g2;
-        b = (b * factorBackground) + (double)(1.0 - factorBackground) * b2;
+        r = ((r1 * factorBackground) + (double)(1.0 - factorBackground) * r2);
+        g = ((g1 * factorBackground) + (double)(1.0 - factorBackground) * g2);
+        b = ((b1 * factorBackground) + (double)(1.0 - factorBackground) * b2);
 
 //        dstPixels[i] = SDL_MapRGB(varBackground->format, r,g,b);
-        dstPixels[i] = (r << 11) | (g << 5) | b;
+        dstPixels[i] = ((r >> 3) << 11) | ((g >> 2) << 5) | b >> 3;
 
         i++;
     }
@@ -218,6 +227,7 @@ Uint32 Motion::showDiffFilter(SDL_Surface *finalImage){
 *
 */
 void Motion::showStepImage(SDL_Surface *finalImage){
+    if (debug) cout << "showStepImage" << endl;
     int width = (int)stepsImage->w;
     int height = (int)stepsImage->h;
 
@@ -246,11 +256,25 @@ Uint32 Motion::showBlobsFilter(SDL_Surface *finalImage){
 Uint32 Motion::showBlobsFilter(SDL_Surface *finalImage, SDL_Surface *binaryImage){
     if (debug) cout << "showBlobsFilter" << endl;
     vector <tArrBlobPos> v;
-    Uint32 nObjs = blobAnalysis(binaryImage, &v);
+    Uint32 nObjs = blobAnalysis(finalImage, binaryImage, &v);
     if (finalImage != NULL){
+    t_color color;
+
         for (Uint32 i=0; i < nObjs; i++){
+
+//            color.r = v.at(i).meanR;
+//            color.g = v.at(i).meanG;
+//            color.b = v.at(i).meanB;
+
             drawRectLine(finalImage,v.at(i).minX, v.at(i).minY,
             v.at(i).maxX,v.at(i).maxY, cVerde,1);
+
+//            cout << "blob" << i << " r " << v.at(i).meanR
+//            << " g " << v.at(i).meanG
+//            << " b " << v.at(i).meanB
+//            << endl;
+
+            //drawText(finalImage, "aliron", v.at(i).minX, v.at(i).minY, cVerde);
         }
     }
     return nObjs;
@@ -261,10 +285,11 @@ Uint32 Motion::showBlobsFilter(SDL_Surface *finalImage, SDL_Surface *binaryImage
 * http://what-when-how.com/introduction-to-video-and-image-processing/blob-analysis-introduction-to-video-and-image-processing-part-1/
 *
 */
-Uint32 Motion::blobAnalysis(SDL_Surface *binaryImage, vector <tArrBlobPos> *v){
+Uint32 Motion::blobAnalysis(SDL_Surface *finalImage, SDL_Surface *binaryImage, vector <tArrBlobPos> *v){
     int detectedObj = 0;
     if (debug) cout << "blobAnalysis" << endl;
 
+    Uint8 r,g,b;
     if (binaryImage != NULL){
         int width = (int)binaryImage->w;
         int height = (int)binaryImage->h;
@@ -273,8 +298,8 @@ Uint32 Motion::blobAnalysis(SDL_Surface *binaryImage, vector <tArrBlobPos> *v){
         memset(arrBlob, 0, width*height*sizeof(Uint16));
 
         vector<int> lista;
-        foreground = SDL_MapRGB(binaryImage->format, cBlanco.r,cBlanco.g,cBlanco.b);
-        background = SDL_MapRGB(binaryImage->format, cNegro.r,cNegro.g,cNegro.b);
+        //foreground = SDL_MapRGB(binaryImage->format, cBlanco.r,cBlanco.g,cBlanco.b);
+        //background = SDL_MapRGB(binaryImage->format, cNegro.r,cNegro.g,cNegro.b);
         int tmpX = 0;
         int tmpY = 0;
         int valXlist = 0;
@@ -366,10 +391,19 @@ Uint32 Motion::blobAnalysis(SDL_Surface *binaryImage, vector <tArrBlobPos> *v){
 //        }
 
         tArrBlobPos arrayBlobPos[nObj];
+        uint16_t *dstPixels = (uint16_t *)finalImage->pixels;
         //Buscamos los limites de cada campo detectado
         for (int y = 0; y < height; y++){
             for (int x = 0; x < width; x++){
                 if (arrBlob[x][y] >= 1){
+
+                    r = ((dstPixels[y*width+x] & red_mask_b) >> 11) << 3;
+                    g = ((dstPixels[y*width+x] & green_mask_b) >> 5) << 2;
+                    b = (dstPixels[y*width+x] & blue_mask_b) << 3;
+
+                    arrayBlobPos[arrBlob[x][y]-1].meanR += r;
+                    arrayBlobPos[arrBlob[x][y]-1].meanG += g;
+                    arrayBlobPos[arrBlob[x][y]-1].meanB += b;
     //                if (arrBlob[x][y]-1 < 7)
     //                imGestor.putpixel(finalImage, x, y, moveShape[arrBlob[x][y]-1]);
                     if (arrayBlobPos[arrBlob[x][y]-1].maxX == -1 || x > arrayBlobPos[arrBlob[x][y]-1].maxX ){
@@ -388,13 +422,27 @@ Uint32 Motion::blobAnalysis(SDL_Surface *binaryImage, vector <tArrBlobPos> *v){
             }
         }
         //Pintamos rectangulos para encuadrar cada objeto
+        Uint32 nPixelsBlob = 0;
         for (int i=0; i < nObj; i++){
             if (arrayBlobPos[i].minX >= 0 && arrayBlobPos[i].minY >= 0 &&
                 arrayBlobPos[i].maxX >= 0 && arrayBlobPos[i].maxY >= 0 &&
                 (abs(arrayBlobPos[i].minX - arrayBlobPos[i].maxX)
                   * abs(arrayBlobPos[i].minY - arrayBlobPos[i].maxY)) > minimumBlobArea){
-                    detectedObj++;
-                    v->push_back(arrayBlobPos[i]);
+
+
+
+                    nPixelsBlob = (arrayBlobPos[i].maxX - arrayBlobPos[i].minX + 1)
+                                * (arrayBlobPos[i].maxY - arrayBlobPos[i].minY + 1);
+
+                    arrayBlobPos[i].meanR = nPixelsBlob > 0 ? arrayBlobPos[i].meanR / nPixelsBlob : 0;
+                    arrayBlobPos[i].meanG = nPixelsBlob > 0 ? arrayBlobPos[i].meanG / nPixelsBlob : 0;
+                    arrayBlobPos[i].meanB = nPixelsBlob > 0 ? arrayBlobPos[i].meanB / nPixelsBlob : 0;
+
+                    //if (arrayBlobPos[i].meanG < 120){
+                        detectedObj++;
+                        v->push_back(arrayBlobPos[i]);
+                    //}
+
     //                drawRectLine(finalImage,arrayBlobPos[i].minX, arrayBlobPos[i].minY,
     //                    arrayBlobPos[i].maxX,arrayBlobPos[i].maxY, cRojo,1);
                 }
@@ -468,29 +516,3 @@ Uint32 Motion::getSafePixel(SDL_Surface *surface, const int x, const int y, Uint
     }
 }
 
-Uint32 Motion::getGrayScale(Uint32 source_color){
-
-    const Uint8 component1 = source_color & 0xff; // red or blue
-    const Uint8 component2 = (source_color >> 8) & 0xff; // green
-    const Uint8 component3 = (source_color >> 16) & 0xff; // blue or red
-
-    // calculating the average component/color (i.e. grayscale)
-    const Uint32 gray = (component1 + component2 + component3) / 3;
-
-    // back to SDL's RGB color (optional)
-    const Uint32 gray_rgb = 0xff000000 | (gray << 16) | (gray << 8) | gray;
-
-    /*
-    // There are multiple ways to get the monochrom image, based on the format you'd like (e.g. just a boolean value or just a RGB value).
-    // First version (actually not recommended, but might save you code e.g. having one fixed conversion function):
-    // calculating the monochromatic color with a given threshold (127)
-    const unsigned int mono = gray > 127 ? 255 : 0;
-    // once again back to SDL's RGB model (optional)
-    const int mono_rgb = 0xff000000 | (mono << 16) | (mono << 8) | mono;
-    */
-    // Second version:
-    // just return the final color in one step
-    // this returns pure white or pure black
-    //const int mono_rgb = gray > 127 ? 0xffffffff : 0xff000000;
-    return gray_rgb;
-}
