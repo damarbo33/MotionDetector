@@ -145,6 +145,10 @@ static void unlock(void *data, void *id, void *const *p_pixels)
         motionDetector->showDiffFilter(cotx->surf);
         //Showing the objects detected in the screen
         motionDetector->showBlobsFilter(cotx->surf);
+
+
+//        motionDetector->diferenceFilter(cotx->bckSurf, cotx->surf);
+//        motionDetector->showStepImage(cotx->surf);
     }
 
     nFrames++;
@@ -206,8 +210,11 @@ int main(int argc, char *argv[])
     motionDetector->iniciarSurfaces(VIDEOWIDTH, VIDEOHEIGHT);
 
     //Creating 16bit RGB565 Surfaces
-    ctx.surf    = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, 16, 0x001f, 0x07e0, 0xf800, 0);
-    ctx.bckSurf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, 16, 0x001f, 0x07e0, 0xf800, 0);
+    ctx.surf    = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, 16,
+                                       red_mask_vlcsurface, green_mask_vlcsurface, blue_mask_vlcsurface, 0);
+
+    ctx.bckSurf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, 16,
+                                       red_mask_vlcsurface, green_mask_vlcsurface, blue_mask_vlcsurface, 0);
 
     ctx.mutex = SDL_CreateMutex();
     int options = SDL_ANYFORMAT | SDL_SWSURFACE;

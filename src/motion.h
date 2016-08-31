@@ -5,9 +5,13 @@
 #include "ImagenGestor.h"
 #include "image/uiimgencoder.h"
 
-static const WORD red_mask = 0xF800;
-static const WORD green_mask = 0x7E0;
-static const WORD blue_mask = 0x1F;
+static const WORD red_mask_vlcsurface = 0x001F;
+static const WORD green_mask_vlcsurface = 0x07E0;
+static const WORD blue_mask_vlcsurface = 0xF800;
+
+static const WORD red_mask_b = 0xF800;
+static const WORD green_mask_b = 0x07E0;
+static const WORD blue_mask_b = 0x001F;
 
 class tArrBlobPos{
     public:
@@ -40,6 +44,7 @@ class Motion
         Uint32 showBlobsFilter(SDL_Surface *finalImage);
         Uint32 showBlobsFilter(SDL_Surface *finalImage, SDL_Surface *binaryImage);
         void backgroundSubtraction(SDL_Surface *varBackground, SDL_Surface *varCurrent);
+        void showStepImage(SDL_Surface *finalImage);
 
 
         void setDifferenceThreshold(int var){
@@ -62,11 +67,13 @@ class Motion
 
         Uint32 background;       //The color to represent nothing
         Uint32 foreground;       //The color to represent an object
+        Uint32 difColour;
 
         Uint32 getGrayScale(Uint32 source_color);
         Uint32 getSafePixel(SDL_Surface *surface, const int x, const int y, Uint32 bckColor);
         void Line(SDL_Surface *surface, float x1, float y1, float x2, float y2, const t_color color);
         void drawRectLine(SDL_Surface *surface, float x0, float y0, float x1, float y1, const t_color color ,int lineWidth);
+
 
         SDL_Surface * stepsImage;
         //SDL_Surface * tmpImage;

@@ -4,10 +4,10 @@
 static bool debug = false;
 
 Motion::Motion(){
-    differenceThreshold = 50;
+    differenceThreshold = 10;
     noiseFilterSize = 19;
     minimumBlobArea = 20;
-    factorBackground = 0.80;
+    factorBackground = 0.75;
     stepsImage = NULL;
 //    tmpImage = NULL;
 }
@@ -21,9 +21,12 @@ void Motion::iniciarSurfaces(int w, int h){
     if (stepsImage != NULL){
         SDL_FreeSurface(stepsImage);
     }
-    stepsImage = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 16, 0,0,0,0);
+    stepsImage = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 16, red_mask_vlcsurface,
+                                      green_mask_vlcsurface, blue_mask_vlcsurface,0);
+
     foreground = SDL_MapRGB(stepsImage->format, cBlanco.r,cBlanco.g,cBlanco.b);
     background = SDL_MapRGB(stepsImage->format, cNegro.r,cNegro.g,cNegro.b);
+    difColour = SDL_MapRGB(stepsImage->format, cRojo.r,cRojo.g,cRojo.b);
 
 //    if (tmpImage != NULL){
 //        SDL_FreeSurface(tmpImage);
@@ -62,7 +65,9 @@ void Motion::diferenceFilter(SDL_Surface *varBackground, SDL_Surface *varCurrent
     int height = (int)varBackground->h;
 
     Uint8 r = 0, g = 0, b = 0;
-    uint16_t pixBack = 0, pixcurrent = 0;
+//    Uint8 r2 = 0, g2 = 0, b2 = 0;
+//    Uint8 r3 = 0, g3 = 0, b3 = 0;
+    Uint8 pixBack = 0, pixcurrent = 0;
     uint16_t *dstPixels = (uint16_t *)stepsImage->pixels;
     uint16_t *backPixels = (uint16_t *)varBackground->pixels;
     uint16_t *currPixels = (uint16_t *)varCurrent->pixels;
@@ -71,19 +76,33 @@ void Motion::diferenceFilter(SDL_Surface *varBackground, SDL_Surface *varCurrent
     int i = 0;
     uint16_t diff = 0;
     while (i < width*height){
-        r = ((backPixels[i] & red_mask) >> 11) << 3;
-        g = ((backPixels[i] & green_mask) >> 5) << 2;
-        b = ((backPixels[i] & blue_mask)) << 3;
+
+        r = (backPixels[i] & red_mask_b) >> 11;
+        g = (backPixels[i] & green_mask_b) >> 5;
+        b = backPixels[i] & blue_mask_b;
+//        SDL_GetRGB(backPixels[i], varBackground->format, &r,&g,&b);
         pixBack = (r+g+b)/3;
 
-        r = ((currPixels[i] & red_mask) >> 11) << 3;
-        g = ((currPixels[i] & green_mask) >> 5) << 2;
-        b = ((currPixels[i] & blue_mask)) << 3;
+        r = (currPixels[i] & red_mask_b) >> 11;
+        g = (currPixels[i] & green_mask_b) >> 5;
+        b = currPixels[i] & blue_mask_b;
+
+//        SDL_GetRGB(currPixels[i], varCurrent->format, &r3,&g3,&b3);
         pixcurrent = (r+g+b)/3;
-        //grey1Pixels[i] = pixBack;
+
+//        uint16_t prev = currPixels[i];
+//
+//        r = (currPixels[i] & red_mask_b) >> 11;
+//        g = (currPixels[i] & green_mask_b) >> 5;
+//        b = currPixels[i] & blue_mask_b;
+//        uint16_t recRGB = (r << 11) | (g << 5) | b;
+
         diff = pixBack > pixcurrent ? pixBack - pixcurrent : pixcurrent - pixBack;
 		//Creating a binary image with a threshold
         dstPixels[i] = diff >= differenceThreshold ? foreground : background;
+        //dstPixels[i] = (pixcurrent << 11) | (pixcurrent << 5) | pixcurrent;
+        //dstPixels[i] = (r << 11) | (g << 5) | b;
+        //dstPixels[i] = (r << 11);
         i++;
     }
 //    UIImageEncoder imEncoder;
@@ -146,23 +165,23 @@ void Motion::backgroundSubtraction(SDL_Surface *varBackground, SDL_Surface *varC
 
     int i=0;
     while (i < varCurrent->h * varCurrent->w){
-//                r = ((dstPixels[i] & red_mask) >> 11) << 3;
-//                g = ((dstPixels[i] & green_mask) >> 5) << 2;
-//                b = ((dstPixels[i] & blue_mask)) << 3;
-//                r2 = ((pixels[i] & red_mask) >> 11) << 3;
-//                g2 = ((pixels[i] & green_mask) >> 5) << 2;
-//                b2 = ((pixels[i] & blue_mask)) << 3;
-//
+//        SDL_GetRGB(dstPixels[i], varBackground->format, &r,&g,&b);
+//        SDL_GetRGB(pixels[i], varCurrent->format, &r2,&g2,&b2);
 
-        SDL_GetRGB(dstPixels[i], varBackground->format, &r,&g,&b);
-        SDL_GetRGB(pixels[i], varCurrent->format, &r2,&g2,&b2);
+        r = (dstPixels[i] & red_mask_b) >> 11;
+        g = (dstPixels[i] & green_mask_b) >> 5;
+        b = dstPixels[i] & blue_mask_b;
+
+        r2 = (pixels[i] & red_mask_b) >> 11;
+        g2 = (pixels[i] & green_mask_b) >> 5;
+        b2 = pixels[i] & blue_mask_b;
 
         r = (r * factorBackground) + (double)(1.0 - factorBackground) * r2;
         g = (g * factorBackground) + (double)(1.0 - factorBackground) * g2;
         b = (b * factorBackground) + (double)(1.0 - factorBackground) * b2;
 
-        dstPixels[i] = SDL_MapRGB(varBackground->format, r,g,b);
-//        dstPixels[i] = (r << 11) | (g << 5) | b;
+//        dstPixels[i] = SDL_MapRGB(varBackground->format, r,g,b);
+        dstPixels[i] = (r << 11) | (g << 5) | b;
 
         i++;
     }
@@ -179,9 +198,6 @@ Uint32 Motion::showDiffFilter(SDL_Surface *finalImage){
     int width = (int)stepsImage->w;
     int height = (int)stepsImage->h;
 
-    foreground = SDL_MapRGB(stepsImage->format, cBlanco.r,cBlanco.g,cBlanco.b);
-    background = SDL_MapRGB(stepsImage->format, cNegro.r,cNegro.g,cNegro.b);
-    Uint32 moveShape = SDL_MapRGB(finalImage->format, cRojo.r,cRojo.g,cRojo.b);
     Uint32 diferences = 0;
 
     uint16_t *dstPixels = (uint16_t *)finalImage->pixels;
@@ -190,7 +206,7 @@ Uint32 Motion::showDiffFilter(SDL_Surface *finalImage){
     int i = 0;
     while (i < width*height){
         if (srcPixels[i] == foreground){
-            dstPixels[i] = moveShape;
+            dstPixels[i] = difColour;
             diferences++;
         }
         i++;
@@ -198,9 +214,28 @@ Uint32 Motion::showDiffFilter(SDL_Surface *finalImage){
     return diferences;
 }
 
+/**
+*
+*/
+void Motion::showStepImage(SDL_Surface *finalImage){
+    int width = (int)stepsImage->w;
+    int height = (int)stepsImage->h;
+
+    uint16_t *dstPixels = (uint16_t *)finalImage->pixels;
+    uint16_t *srcPixels = (uint16_t *)stepsImage->pixels;
+
+    int i = 0;
+    while (i < width*height){
+        dstPixels[i] = srcPixels[i];
+        i++;
+    }
+}
+
 Uint32 Motion::showBlobsFilter(SDL_Surface *finalImage){
     return showBlobsFilter(finalImage, stepsImage);
 }
+
+
 
 /**
 * Despues de aplicar diferenceFilter y erosionFilter, tenemos en stepsImage
