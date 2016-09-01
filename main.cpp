@@ -149,6 +149,8 @@ static void unlock(void *data, void *id, void *const *p_pixels)
 
 
 //        motionDetector->diferenceFilter(cotx->bckSurf, cotx->surf);
+//        //motionDetector->medianFilter(3);
+//        motionDetector->erosionFilter();
 //        motionDetector->showStepImage(cotx->surf);
     }
 
@@ -173,7 +175,7 @@ static void display(void *data, void *id)
 int main(int argc, char *argv[])
 {
     string appDir = argv[0];
-    int pos = appDir.rfind(Constant::getFileSep());
+    size_t pos = appDir.rfind(Constant::getFileSep());
     if (pos == string::npos){
         FILE_SEPARATOR = FILE_SEPARATOR_UNIX;
         pos = appDir.rfind(FILE_SEPARATOR);
@@ -188,6 +190,7 @@ int main(int argc, char *argv[])
     string rutaTraza = appDir + Constant::getFileSep() + "Traza.txt";
 
     Traza *traza = new Traza(rutaTraza.c_str());
+    Traza::print("Detector iniciado", W_DEBUG);
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTTHREAD | SDL_INIT_TIMER);
 
@@ -335,6 +338,7 @@ int main(int argc, char *argv[])
     SDL_FreeSurface(ctx.bckSurf);
 
     SDL_Quit();
+    delete traza;
 
     return 0;
 }

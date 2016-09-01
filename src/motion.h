@@ -13,6 +13,8 @@ static const WORD red_mask_b = 0xF800;
 static const WORD green_mask_b = 0x07E0;
 static const WORD blue_mask_b = 0x001F;
 
+static const int maxHistVals = 10;
+
 class tArrBlobPos{
     public:
 
@@ -29,6 +31,29 @@ class tArrBlobPos{
     Uint32 meanR;
     Uint32 meanG;
     Uint32 meanB;
+};
+
+class t_histogram{
+
+    public:
+        t_histogram(){
+            size = 0;
+        }
+
+        void add(Uint8 var, Uint32 x, Uint32 y, Uint32 w){
+            if (size >= maxHistVals){
+                for (int i=0; i < maxHistVals-1; i++){
+                    val[x+y*w + i] = val[x+y*w + i + 1];
+                }
+            }
+            val[ x+y*w + size] = var;
+
+            if (size < maxHistVals)
+                size++;
+        }
+
+        Uint8 *val;
+        Uint32 size;
 };
 
 class Motion
@@ -50,6 +75,7 @@ class Motion
         Uint32 showBlobsFilter(SDL_Surface *finalImage, SDL_Surface *binaryImage);
         void backgroundSubtraction(SDL_Surface *varBackground, SDL_Surface *varCurrent);
         void showStepImage(SDL_Surface *finalImage);
+        void medianFilter(int msize);
 
 
         void setDifferenceThreshold(int var){
@@ -79,8 +105,12 @@ class Motion
         void drawRectLine(SDL_Surface *surface, float x0, float y0, float x1, float y1, const t_color color ,int lineWidth);
 
         SDL_Surface * stepsImage;
-        //SDL_Surface * tmpImage;
+        SDL_Surface * tmpImage;
+
+        t_histogram histogram;
+
         ImagenGestor imGestor;
+        void QuickSort(uint16_t *A, int AHigh, int iLo, int iHi);
 };
 
 #endif // MOTION_H

@@ -1,10 +1,11 @@
 #include "motion.h"
 #include "math.h"
+#include "ListaSimple.h"
 
 static bool debug = false;
 
 Motion::Motion(){
-    differenceThreshold = 80;
+    differenceThreshold = 40;
     noiseFilterSize = 19;
     minimumBlobArea = 20;
     factorBackground = 0.80;
@@ -13,6 +14,7 @@ Motion::Motion(){
 
 Motion::~Motion(){
     //dtor
+    delete [] histogram.val;
 }
 
 void Motion::iniciarSurfaces(int w, int h){
@@ -24,14 +26,15 @@ void Motion::iniciarSurfaces(int w, int h){
     stepsImage = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 16, red_mask_vlcsurface,
                                       green_mask_vlcsurface, blue_mask_vlcsurface,0);
 
+    tmpImage = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 16, red_mask_vlcsurface,
+                                      green_mask_vlcsurface, blue_mask_vlcsurface,0);
+
+    histogram.val = new Uint8[w*h*maxHistVals];
+    memset(histogram.val, 0, w*h*maxHistVals);
+
     foreground = SDL_MapRGB(stepsImage->format, cBlanco.r,cBlanco.g,cBlanco.b);
     background = SDL_MapRGB(stepsImage->format, cNegro.r,cNegro.g,cNegro.b);
     difColour = SDL_MapRGB(stepsImage->format, cRojo.r,cRojo.g,cRojo.b);
-
-//    if (tmpImage != NULL){
-//        SDL_FreeSurface(tmpImage);
-//    }
-//    tmpImage = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 16, 0,0,0,0);
 }
 
 /**
@@ -131,6 +134,7 @@ void Motion::erosionFilter(){
     //second-pass: erosion filter (remove noise i.e. ignore minor differences between two frames)
     int m = noiseFilterSize;
     int n = (m - 1) / 2; //'m' will be an odd number always
+    int midAreaPx = n*n/2;
 
     for (int x = 0; x < width; x+=m-1)
     {
@@ -138,24 +142,127 @@ void Motion::erosionFilter(){
         {
             //count the number of marked pixels in current window
             int marked = 0;
-            for (int i = x - n; i < x + n && marked < n; i++)
-                for (int j = y - n; j < y + n && marked < n; j++)
+            for (int i = x - n; i < x + n && marked < midAreaPx; i++)
+                for (int j = y - n; j < y + n && marked < midAreaPx; j++)
                     if (i < width && j < height && i >= 0 && j >= 0)
                     marked += dstPixels[i+j*width] == foreground ? 1 : 0;
 
-            //if atleast half the number of pixels are marked, then mark the full window
-            if (marked >= n)
-            {
-                for (int i = x - n; i < x + n; i++)
-                    for (int j = y - n; j < y + n; j++)
-                        if (i < width && j < height && i >= 0 && j >= 0)
-                            dstPixels[i+j*width] = foreground;
-            }
+            //if atleast half the number of the full area pixels are marked, then mark the full window
+            //otherwise, removes the noise
+            for (int i = x - n; i < x + n; i++)
+                for (int j = y - n; j < y + n; j++)
+                    if (i < width && j < height && i >= 0 && j >= 0){
+                        if (marked >= midAreaPx)
+                            dstPixels[i+j*width] = foreground; //Maximizes area with diferences
+                        else
+                            dstPixels[i+j*width] = background; //Removes noise
+                    }
+
+//            //This part doesnt remove the noise
+//            if (marked >= midAreaPx)
+//                for (int i = x - n; i < x + n; i++)
+//                    for (int j = y - n; j < y + n; j++)
+//                        if (i < width && j < height && i >= 0 && j >= 0)
+//                                dstPixels[i+j*width] = foreground;
         }
     }
 
     //UIImageEncoder imEncoder;
     //imEncoder.IMG_SaveJPG("tmpImageV2.jpg", tmpImage, 95);
+}
+
+void Motion::medianFilter(int msize){
+    if (debug) cout << "medianFilter" << endl;
+    int width = (int)stepsImage->w;
+    int height = (int)stepsImage->h;
+
+    uint16_t *srcPixels = (uint16_t *)tmpImage->pixels;
+    uint16_t *dstPixels = (uint16_t *)stepsImage->pixels;
+
+    SDL_BlitSurface(stepsImage, NULL, tmpImage, NULL);
+    uint16_t medianList[msize*msize];
+    for (int o=0; o < msize*msize; o++)
+        medianList[o] = 0;
+
+    int m = msize;
+    int n = (m - 1) / 2; //'m' will be an odd number always
+    int midPos = 0;
+    int elems = 0;
+
+//    int nWhites = 0;
+//    int nBlacks = 0;
+
+    for (int x = 0; x < width; x++){
+        for (int y = 0; y < height; y++){
+            //count the number of marked pixels in current window
+            for (int i = x - n; i <= x + n; i++)
+                for (int j = y - n; j <= y + n; j++)
+                    if (i < width && j < height && i >= 0 && j >= 0){
+                        medianList[elems] = srcPixels[i+j*width];
+                        elems++;
+//                        if (dstPixels[i+j*width] == foreground)
+//                            nWhites++;
+//                        else
+//                            nBlacks++;
+                    }
+
+//            if (nBlacks > nWhites){
+//                dstPixels[x+y*width] = background;
+//            }
+//
+//            nWhites = 0;
+//            nBlacks = 0;
+
+            QuickSort(medianList, elems-1, 0, elems-1);
+            if (elems % 2 == 0 && elems > 1){
+                midPos = elems / 2 - 1;
+                //Calculamos la mediana con la media de los dos valores centrales
+                dstPixels[x+y*width] = medianList[midPos] + medianList[midPos + 1];
+            } else if (elems > 0){
+                dstPixels[x+y*width] = medianList[(elems - 1) / 2];
+            } else {
+                dstPixels[x+y*width] = 0;
+            }
+            elems = 0;
+        }
+    }
+
+    //UIImageEncoder imEncoder;
+    //imEncoder.IMG_SaveJPG("tmpImageV2.jpg", tmpImage, 95);
+}
+
+void Motion::QuickSort(uint16_t *A, int AHigh, int iLo, int iHi)
+{
+  int Lo, Hi;
+  uint16_t Mid;
+  uint16_t T;
+  Lo = iLo;
+  Hi = iHi;
+
+  Mid = A[(Lo+Hi)/2];
+
+  do
+  {
+    while (A[Lo]<(Mid))
+        Lo++;
+    while (A[Hi]>(Mid))
+        Hi--;
+    //free(Mid);
+    if (Lo <= Hi)
+    {
+      T=A[Lo];
+      A[Lo] = A[Hi];
+      A[Hi]=T;
+      Lo++;
+      Hi--;
+    }
+  }
+  while (Lo <= Hi);
+
+  if (Hi > iLo)
+    QuickSort(A, AHigh, iLo, Hi);
+  if (Lo < iHi)
+    QuickSort(A, AHigh, Lo, iHi);
 }
 
 /**
@@ -258,7 +365,7 @@ Uint32 Motion::showBlobsFilter(SDL_Surface *finalImage, SDL_Surface *binaryImage
     vector <tArrBlobPos> v;
     Uint32 nObjs = blobAnalysis(finalImage, binaryImage, &v);
     if (finalImage != NULL){
-    t_color color;
+//    t_color color;
 
         for (Uint32 i=0; i < nObjs; i++){
 
@@ -404,8 +511,7 @@ Uint32 Motion::blobAnalysis(SDL_Surface *finalImage, SDL_Surface *binaryImage, v
                     arrayBlobPos[arrBlob[x][y]-1].meanR += r;
                     arrayBlobPos[arrBlob[x][y]-1].meanG += g;
                     arrayBlobPos[arrBlob[x][y]-1].meanB += b;
-    //                if (arrBlob[x][y]-1 < 7)
-    //                imGestor.putpixel(finalImage, x, y, moveShape[arrBlob[x][y]-1]);
+
                     if (arrayBlobPos[arrBlob[x][y]-1].maxX == -1 || x > arrayBlobPos[arrBlob[x][y]-1].maxX ){
                         arrayBlobPos[arrBlob[x][y]-1].maxX = x;
                     }
