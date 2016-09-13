@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1471610798 source:c:\github\proyectos\motiondetector\main.cpp
+1473768836 source:c:\github\proyectos\motiondetector\main.cpp
 	<iostream>
 	"motion.h"
 	<stdio.h>
@@ -11,11 +11,12 @@
 	<SDL/SDL_mutex.h>
 	<vlc/vlc.h>
 
-1471610970 source:c:\github\proyectos\motiondetector\src\motion.cpp
+1472803819 source:c:\github\proyectos\motiondetector\src\motion.cpp
 	"motion.h"
 	"math.h"
+	"ListaSimple.h"
 
-1471609908 c:\github\proyectos\motiondetector\src\motion.h
+1472730765 c:\github\proyectos\motiondetector\src\motion.h
 	"SDL/SDL.h"
 	"ImagenGestor.h"
 	"image/uiimgencoder.h"
@@ -104,7 +105,7 @@
 
 1459872931 c:\github\externallibs\uiobjects\src\common.h
 
-1433425332 c:\github\externallibs\uiobjects\src\image\uiimgencoder.h
+1472556517 c:\github\externallibs\uiobjects\src\image\uiimgencoder.h
 	<SDL/SDL.h>
 	<stdlib.h>
 	<stdio.h>

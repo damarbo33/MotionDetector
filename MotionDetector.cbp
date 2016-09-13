@@ -57,6 +57,8 @@
 					<Add library="../../ExternalLibs/libjpeg/bin/Release/libjpeg.a" />
 					<Add library="../../ExternalLibs/vlc-2.2.4/sdk/lib/libvlc.lib" />
 					<Add library="../../ExternalLibs/vlc-2.2.4/sdk/lib/libvlccore.lib" />
+					<Add library="../../ExternalLibs/vlc-2.2.4/sdk/lib/vlc.lib" />
+					<Add library="../../ExternalLibs/vlc-2.2.4/sdk/lib/vlccore.lib" />
 					<Add directory="../../ExternalLibs/UIObjects/bin/Release" />
 					<Add directory="../../ExternalLibs/zipUtils/bin/Release" />
 					<Add directory="../../ExternalLibs/sqllite/bin/Release" />
@@ -120,6 +122,8 @@
 					<Add library="../../ExternalLibs/libjpeg/bin/Release/libjpeg.a" />
 					<Add library="../../ExternalLibs/vlc-2.2.4/sdk/lib/libvlc.lib" />
 					<Add library="../../ExternalLibs/vlc-2.2.4/sdk/lib/libvlccore.lib" />
+					<Add library="../../ExternalLibs/vlc-2.2.4/sdk/lib/vlc.lib" />
+					<Add library="../../ExternalLibs/vlc-2.2.4/sdk/lib/vlccore.lib" />
 					<Add directory="../../ExternalLibs/UIObjects/bin/Release" />
 					<Add directory="../../ExternalLibs/zipUtils/bin/Release" />
 					<Add directory="../../ExternalLibs/sqllite/bin/Release" />

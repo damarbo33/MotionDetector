@@ -86,7 +86,7 @@ void Motion::diferenceFilter(SDL_Surface *varBackground, SDL_Surface *varCurrent
 //        SDL_GetRGB(backPixels[i], varBackground->format, &r,&g,&b);
         //Obtenemos la media de los 3 valores para obtener un pixel gris
         //pixBack = (r+g+b)/3;
-         pixBack = (0.3 * r) + (0.59 * g) + (0.11 * b);
+         pixBack = 0.3 * r + 0.59 * g + 0.11 * b;
 
         //El desplazamiento a derechas 11,5 es para obtener los valores
         //en formato rgb565 directamente del pixel en formato 16bits.
@@ -99,7 +99,7 @@ void Motion::diferenceFilter(SDL_Surface *varBackground, SDL_Surface *varCurrent
 //        SDL_GetRGB(currPixels[i], varCurrent->format, &r3,&g3,&b3);
         //Obtenemos la media de los 3 valores para obtener un pixel gris
         //pixcurrent = (r+g+b)/3;
-        pixcurrent = (0.3 * r) + (0.59 * g) + (0.11 * b);
+        pixcurrent = 0.3 * r + 0.59 * g + 0.11 * b;
 
         diff = pixBack > pixcurrent ? pixBack - pixcurrent : pixcurrent - pixBack;
 		//Creating a binary image with a threshold
@@ -126,10 +126,10 @@ void Motion::erosionFilter(){
     int width = (int)stepsImage->w;
     int height = (int)stepsImage->h;
     //SDL_FillRect(tmpImage, NULL, background);
-    //SDL_BlitSurface(stepsImage, NULL, tmpImage, NULL);
+    SDL_BlitSurface(stepsImage, NULL, tmpImage, NULL);
 
     uint16_t *dstPixels = (uint16_t *)stepsImage->pixels;
-    //uint16_t *srcPixels = (uint16_t *)tmpImage->pixels;
+    uint16_t *srcPixels = (uint16_t *)tmpImage->pixels;
 
     //second-pass: erosion filter (remove noise i.e. ignore minor differences between two frames)
     int m = noiseFilterSize;
@@ -145,7 +145,7 @@ void Motion::erosionFilter(){
             for (int i = x - n; i < x + n && marked < midAreaPx; i++)
                 for (int j = y - n; j < y + n && marked < midAreaPx; j++)
                     if (i < width && j < height && i >= 0 && j >= 0)
-                    marked += dstPixels[i+j*width] == foreground ? 1 : 0;
+                    marked += srcPixels[i+j*width] == foreground ? 1 : 0;
 
             //if atleast half the number of the full area pixels are marked, then mark the full window
             //otherwise, removes the noise
