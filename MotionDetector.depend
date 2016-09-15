@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1473939859 source:c:\github\proyectos\motiondetector\main.cpp
+1473942761 source:c:\github\proyectos\motiondetector\main.cpp
 	<iostream>
 	"motion.h"
 	<stdio.h>
@@ -11,7 +11,7 @@
 	<SDL/SDL_mutex.h>
 	<vlc/vlc.h>
 
-1473940257 source:c:\github\proyectos\motiondetector\src\motion.cpp
+1473943031 source:c:\github\proyectos\motiondetector\src\motion.cpp
 	"motion.h"
 	"math.h"
 	"ListaSimple.h"

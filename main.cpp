@@ -142,13 +142,13 @@ static void unlock(void *data, void *id, void *const *p_pixels)
         motionDetector->diferenceFilter(cotx->bckSurf, cotx->surf);
         //Joining areas with a minimal number of changes
         motionDetector->erosionFilter();
-//        //Updating the background dinamically every 1000 frames
-//        if (nFrames % 1000 == 0){
-//            motionDetector->backgroundSubtraction(cotx->bckSurf, cotx->surf);
-//        }
-//        //Showing the diferences in the screen
+        //Updating the background dinamically every 1000 frames
+        if (nFrames % 1000 == 0){
+            motionDetector->backgroundSubtraction(cotx->bckSurf, cotx->surf);
+        }
+        //Showing the diferences in the screen
 //        //motionDetector->showDiffFilter(cotx->surf);
-//        //Showing the objects detected in the screen
+        //Showing the objects detected in the screen
         motionDetector->showBlobsFilter(cotx->surf);
 //
 //

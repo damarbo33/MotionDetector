@@ -286,28 +286,29 @@ void Motion::backgroundSubtraction(SDL_Surface *varBackground, SDL_Surface *varC
     uint8_t r1=0,g1=0,b1=0;
     uint8_t r2=0,g2=0,b2=0;
 
-    uint16_t *dstPixels = (uint16_t *)varBackground->pixels;
-    uint16_t *pixels = (uint16_t *)varCurrent->pixels;
+    uint8_t *dstPixels = (uint8_t *)varBackground->pixels;
+    uint8_t *pixels = (uint8_t *)varCurrent->pixels;
 
     int i=0;
-    while (i < varCurrent->h * varCurrent->w){
-//        SDL_GetRGB(dstPixels[i], varBackground->format, &r1,&g1,&b1);
-//        SDL_GetRGB(pixels[i], varCurrent->format, &r2,&g2,&b2);
+    const int totalPixels = varCurrent->h * varCurrent->w;
 
-        r1 = ((dstPixels[i] & red_mask_b) >> 11) << 3;
-        g1 = ((dstPixels[i] & green_mask_b) >> 5) << 2;
-        b1 = (dstPixels[i] & blue_mask_b) << 3;
+    while (i < totalPixels){
 
-        r2 = ((pixels[i] & red_mask_b) >> 11) << 3;
-        g2 = ((pixels[i] & green_mask_b) >> 5) << 2;
-        b2 = (pixels[i] & blue_mask_b) << 3;
+        r1 = dstPixels[i*3];
+        g1 = dstPixels[i*3+1];
+        b1 = dstPixels[i*3+2];
+
+        r2 = *pixels++;
+        g2 = *pixels++;
+        b2 = *pixels++;
 
         r = ((r1 * factorBackground) + (double)(1.0 - factorBackground) * r2);
         g = ((g1 * factorBackground) + (double)(1.0 - factorBackground) * g2);
         b = ((b1 * factorBackground) + (double)(1.0 - factorBackground) * b2);
 
-//        dstPixels[i] = SDL_MapRGB(varBackground->format, r,g,b);
-        dstPixels[i] = ((r >> 3) << 11) | ((g >> 2) << 5) | b >> 3;
+        dstPixels[i*3] = r;   //r
+        dstPixels[i*3+1] = g; //g
+        dstPixels[i*3+2] = b; //b
 
         i++;
     }
@@ -326,11 +327,13 @@ Uint32 Motion::showDiffFilter(SDL_Surface *finalImage){
 
     Uint32 diferences = 0;
 
-    uint16_t *dstPixels = (uint16_t *)finalImage->pixels;
-    uint16_t *srcPixels = (uint16_t *)stepsImage->pixels;
+    uint64_t *dstPixels = (uint64_t *)finalImage->pixels;
+    uint64_t *srcPixels = (uint64_t *)stepsImage->pixels;
 
     int i = 0;
-    while (i < width*height){
+    const int totalPixels = width * height * stepsImage->format->BytesPerPixel / sizeof(uint64_t);
+
+    while (i < totalPixels){
         if (srcPixels[i] == foreground){
             dstPixels[i] = difColour;
             diferences++;
@@ -407,7 +410,6 @@ Uint32 Motion::showBlobsFilter(SDL_Surface *finalImage, SDL_Surface *binaryImage
 Uint32 Motion::blobAnalysis(SDL_Surface *finalImage, SDL_Surface *binaryImage, vector <tArrBlobPos> *v){
     if (debug) cout << "blobAnalysis" << endl;
 
-    Uint8 r,g,b;
     int detectedObj = 0;
 
 
@@ -546,7 +548,7 @@ Uint32 Motion::blobAnalysis(SDL_Surface *finalImage, SDL_Surface *binaryImage, v
         }
 
         //Pintamos rectangulos para encuadrar cada objeto
-        Uint32 nPixelsBlob = 0;
+//        Uint32 nPixelsBlob = 0;
         for (int i=0; i < nObj; i++){
             if (arrayBlobPos[i].minX >= 0 && arrayBlobPos[i].minY >= 0 &&
                 arrayBlobPos[i].maxX >= 0 && arrayBlobPos[i].maxY >= 0 &&
@@ -555,8 +557,8 @@ Uint32 Motion::blobAnalysis(SDL_Surface *finalImage, SDL_Surface *binaryImage, v
 
 
 
-                    nPixelsBlob = (arrayBlobPos[i].maxX - arrayBlobPos[i].minX + 1)
-                                * (arrayBlobPos[i].maxY - arrayBlobPos[i].minY + 1);
+//                    nPixelsBlob = (arrayBlobPos[i].maxX - arrayBlobPos[i].minX + 1)
+//                                * (arrayBlobPos[i].maxY - arrayBlobPos[i].minY + 1);
 
                     //Calculating the mean color of the objects
 //                    arrayBlobPos[i].meanR = nPixelsBlob > 0 ? arrayBlobPos[i].meanR / nPixelsBlob : 0;
