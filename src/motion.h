@@ -13,6 +13,19 @@ static const WORD red_mask_b = 0xF800;
 static const WORD green_mask_b = 0x07E0;
 static const WORD blue_mask_b = 0x001F;
 
+
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    static const uint32_t b24rmask = 0x0000ff00;
+    static const uint32_t b24gmask = 0x00ff0000;
+    static const uint32_t b24bmask = 0xff000000;
+    static const uint32_t b24amask = 0x000000ff;
+#else
+    static const uint32_t b24rmask = 0x00ff0000;
+    static const uint32_t b24gmask = 0x0000ff00;
+    static const uint32_t b24bmask = 0x000000ff;
+    static const uint32_t b24amask = 0xff000000;
+#endif
+
 static const int maxHistVals = 10;
 
 class tArrBlobPos{

@@ -23,11 +23,9 @@ void Motion::iniciarSurfaces(int w, int h){
         SDL_FreeSurface(stepsImage);
     }
 
-    stepsImage = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 16, red_mask_vlcsurface,
-                                      green_mask_vlcsurface, blue_mask_vlcsurface,0);
+    stepsImage = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 24, b24rmask, b24gmask, b24bmask,0);
 
-    tmpImage = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 16, red_mask_vlcsurface,
-                                      green_mask_vlcsurface, blue_mask_vlcsurface,0);
+    tmpImage = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 24, b24rmask, b24gmask, b24bmask,0);
 
     histogram.val = new Uint8[w*h*maxHistVals];
     memset(histogram.val, 0, w*h*maxHistVals);
@@ -64,55 +62,68 @@ void Motion::iniciarPrueba(SDL_Surface *backgroundFrame, SDL_Surface *currentFra
 */
 void Motion::diferenceFilter(SDL_Surface *varBackground, SDL_Surface *varCurrent){
     if (debug) cout << "diferenceFilter" << endl;
-    int width = (int)varBackground->w;
-    int height = (int)varBackground->h;
+    int width = (int)stepsImage->w;
+    int height = (int)stepsImage->h;
 
     Uint8 r = 0, g = 0, b = 0;
 //    Uint8 r2 = 0, g2 = 0, b2 = 0;
 //    Uint8 r3 = 0, g3 = 0, b3 = 0;
-    Uint8 pixBack = 0, pixcurrent = 0;
-    uint16_t *dstPixels = (uint16_t *)stepsImage->pixels;
-    uint16_t *backPixels = (uint16_t *)varBackground->pixels;
-    uint16_t *currPixels = (uint16_t *)varCurrent->pixels;
+    uint8_t pixBack = 0, pixcurrent = 0;
+    uint8_t *dstPixels = (uint8_t *)stepsImage->pixels;
+    uint8_t *backPixels = (uint8_t *)varBackground->pixels;
+    uint8_t *currPixels = (uint8_t *)varCurrent->pixels;
 
     //first-pass: difference and threshold filter (mark the pixels that are changed between two frames)
     int i = 0;
-    uint16_t diff = 0;
-    while (i < width*height){
-        r = ((backPixels[i] & red_mask_b) >> 11) << 3;
-        g = ((backPixels[i] & green_mask_b) >> 5) << 2;
-        b = (backPixels[i] & blue_mask_b) << 3;
+    uint8_t diff = 0;
+    const int totalPixels = width * height * stepsImage->format->BytesPerPixel;
+
+    while (i < totalPixels){
+
+        r = *backPixels++;
+        g = *backPixels++;
+        b = *backPixels++;
 
 //        SDL_GetRGB(backPixels[i], varBackground->format, &r,&g,&b);
         //Obtenemos la media de los 3 valores para obtener un pixel gris
-        //pixBack = (r+g+b)/3;
-         pixBack = 0.3 * r + 0.59 * g + 0.11 * b;
+        pixBack = (r+g+b)/3;
+//         pixBack = 0.3 * r + 0.59 * g + 0.11 * b;
 
         //El desplazamiento a derechas 11,5 es para obtener los valores
         //en formato rgb565 directamente del pixel en formato 16bits.
         //El desplazamiento a izquierda 3,2,3 es para convertir al formato
         //rgb de 0 bits por color
-        r = ((currPixels[i] & red_mask_b) >> 11) << 3;
-        g = ((currPixels[i] & green_mask_b) >> 5) << 2;
-        b = (currPixels[i] & blue_mask_b) << 3;
+        r = *currPixels++;
+        g = *currPixels++;
+        b = *currPixels++;
 
 //        SDL_GetRGB(currPixels[i], varCurrent->format, &r3,&g3,&b3);
         //Obtenemos la media de los 3 valores para obtener un pixel gris
-        //pixcurrent = (r+g+b)/3;
-        pixcurrent = 0.3 * r + 0.59 * g + 0.11 * b;
+        pixcurrent = (r+g+b)/3;
+//        pixcurrent = 0.3 * r + 0.59 * g + 0.11 * b;
 
         diff = pixBack > pixcurrent ? pixBack - pixcurrent : pixcurrent - pixBack;
 		//Creating a binary image with a threshold
-        dstPixels[i] = diff >= differenceThreshold ? foreground : background;
-        /*
-        //Para obtener una imagen en gris, primero devolvemos al formato rgb565
-        r = pixcurrent >> 3;
-        g = pixcurrent >> 2;
-        b = pixcurrent >> 3;
-        //Y desplazamos los bits correspondiendo al formato 16bits RGB565
-        dstPixels[i] = (r << 11) | (g << 5) | b;
-        */
-        i++;
+		#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+            dstPixels[i] = diff >= differenceThreshold ? (foreground >> 16) & 0xff : (background >> 16) & 0xff;
+            dstPixels[i+1] = diff >= differenceThreshold ? (foreground >> 8) & 0xff : (background >> 8) & 0xff;
+            dstPixels[i+2] = diff >= differenceThreshold ? foreground & 0xff : background & 0xff;
+        #else
+            dstPixels[i] = diff >= differenceThreshold ? foreground & 0xff : background & 0xff;
+            dstPixels[i+1] = diff >= differenceThreshold ? (foreground >> 8) & 0xff : (background >> 8) & 0xff;
+            dstPixels[i+2] = diff >= differenceThreshold ? (foreground >> 16) & 0xff : (background >> 16) & 0xff;
+        #endif
+
+        //Para obtener una imagen en gris
+//        dstPixels[i] = pixcurrent;   //b
+//        dstPixels[i+1] = pixcurrent; //g
+//        dstPixels[i+2] = pixcurrent; //r
+
+//        dstPixels[i] = r;   //r
+//        dstPixels[i+1] = g; //g
+//        dstPixels[i+2] = b; //b
+
+        i+=3;
     }
 //    UIImageEncoder imEncoder;
 //    imEncoder.IMG_SaveJPG("stepsImage.jpg", stepsImage, 95);
@@ -128,9 +139,6 @@ void Motion::erosionFilter(){
     //SDL_FillRect(tmpImage, NULL, background);
     SDL_BlitSurface(stepsImage, NULL, tmpImage, NULL);
 
-    uint16_t *dstPixels = (uint16_t *)stepsImage->pixels;
-    uint16_t *srcPixels = (uint16_t *)tmpImage->pixels;
-
     //second-pass: erosion filter (remove noise i.e. ignore minor differences between two frames)
     int m = noiseFilterSize;
     int n = (m - 1) / 2; //'m' will be an odd number always
@@ -145,17 +153,19 @@ void Motion::erosionFilter(){
             for (int i = x - n; i < x + n && marked < midAreaPx; i++)
                 for (int j = y - n; j < y + n && marked < midAreaPx; j++)
                     if (i < width && j < height && i >= 0 && j >= 0)
-                    marked += srcPixels[i+j*width] == foreground ? 1 : 0;
+                        marked += imGestor.getpixel(tmpImage, i, j) == foreground ? 1 : 0;
 
             //if atleast half the number of the full area pixels are marked, then mark the full window
             //otherwise, removes the noise
             for (int i = x - n; i < x + n; i++)
                 for (int j = y - n; j < y + n; j++)
-                    if (i < width && j < height && i >= 0 && j >= 0){
+                    if (i <= width && j < height && i >= 0 && j >= 0){
                         if (marked >= midAreaPx)
-                            dstPixels[i+j*width] = foreground; //Maximizes area with diferences
+                            //Maximizes area with diferences
+                            imGestor.putpixel(stepsImage, i, j, foreground);
                         else
-                            dstPixels[i+j*width] = background; //Removes noise
+                            //Removes noise
+                            imGestor.putpixel(stepsImage, i, j, background);
                     }
 
 //            //This part doesnt remove the noise
@@ -334,15 +344,17 @@ Uint32 Motion::showDiffFilter(SDL_Surface *finalImage){
 *
 */
 void Motion::showStepImage(SDL_Surface *finalImage){
-    if (debug) cout << "showStepImage" << endl;
+    if (debug) cout << "showStepImage " << stepsImage->format->BytesPerPixel << endl;
     int width = (int)stepsImage->w;
     int height = (int)stepsImage->h;
 
-    uint16_t *dstPixels = (uint16_t *)finalImage->pixels;
-    uint16_t *srcPixels = (uint16_t *)stepsImage->pixels;
+    uint64_t *dstPixels = (uint64_t *)finalImage->pixels;
+    uint64_t *srcPixels = (uint64_t *)stepsImage->pixels;
 
     int i = 0;
-    while (i < width*height){
+    const int totalPixels = width * height * stepsImage->format->BytesPerPixel / sizeof(uint64_t);
+
+    while (i < totalPixels){
         dstPixels[i] = srcPixels[i];
         i++;
     }
@@ -393,16 +405,18 @@ Uint32 Motion::showBlobsFilter(SDL_Surface *finalImage, SDL_Surface *binaryImage
 *
 */
 Uint32 Motion::blobAnalysis(SDL_Surface *finalImage, SDL_Surface *binaryImage, vector <tArrBlobPos> *v){
-    int detectedObj = 0;
     if (debug) cout << "blobAnalysis" << endl;
 
     Uint8 r,g,b;
+    int detectedObj = 0;
+
+
     if (binaryImage != NULL){
         int width = (int)binaryImage->w;
         int height = (int)binaryImage->h;
         //En arrBlob almacenamos el numero de objeto que le corresponde a cada pixel
-        Uint16 arrBlob[width][height];
-        memset(arrBlob, 0, width*height*sizeof(Uint16));
+        Uint32 arrBlob[width][height];
+        memset(arrBlob, 0, width*height*sizeof(Uint32));
 
         vector<int> lista;
         //foreground = SDL_MapRGB(binaryImage->format, cBlanco.r,cBlanco.g,cBlanco.b);
@@ -426,7 +440,7 @@ Uint32 Motion::blobAnalysis(SDL_Surface *finalImage, SDL_Surface *binaryImage, v
         int maxShapes = pow(2, sizeof(arrBlob) / sizeof(arrBlob[0]));
 
         //uint16_t *dstPixels = (uint16_t *)finalImage->pixels;
-        uint16_t *srcPixels = (uint16_t *)binaryImage->pixels;
+//        uint32_t *srcPixels = (uint32_t *)binaryImage->pixels;
 
         int i = 0;
         int x = 0, y = 0;
@@ -434,10 +448,10 @@ Uint32 Motion::blobAnalysis(SDL_Surface *finalImage, SDL_Surface *binaryImage, v
             x = i % width;
             y = i / width;
 
-            if (srcPixels[i] == foreground){
+            if (imGestor.getpixel(binaryImage, x, y) == foreground){
                 nObj++;
                 arrBlob[x][y] = nObj;
-                srcPixels[i] = background;
+                imGestor.putpixel(binaryImage, x, y, background);
                 found = true;
             } else {
                 found = false;
@@ -495,22 +509,25 @@ Uint32 Motion::blobAnalysis(SDL_Surface *finalImage, SDL_Surface *binaryImage, v
             }
             i++;
         }
-//        }
 
         tArrBlobPos arrayBlobPos[nObj];
-        uint16_t *dstPixels = (uint16_t *)finalImage->pixels;
+
+//        uint8_t *dstPixels = (uint8_t *)finalImage->pixels;
+//        int posPix = 0;
         //Buscamos los limites de cada campo detectado
         for (int y = 0; y < height; y++){
             for (int x = 0; x < width; x++){
                 if (arrBlob[x][y] >= 1){
 
-                    r = ((dstPixels[y*width+x] & red_mask_b) >> 11) << 3;
-                    g = ((dstPixels[y*width+x] & green_mask_b) >> 5) << 2;
-                    b = (dstPixels[y*width+x] & blue_mask_b) << 3;
-
-                    arrayBlobPos[arrBlob[x][y]-1].meanR += r;
-                    arrayBlobPos[arrBlob[x][y]-1].meanG += g;
-                    arrayBlobPos[arrBlob[x][y]-1].meanB += b;
+//                    //Calculating the mean color of the objects
+//                    posPix = (y*width+x)*3;
+//                    r = dstPixels[posPix];
+//                    g = dstPixels[posPix+1];
+//                    b = dstPixels[posPix+2];
+//
+//                    arrayBlobPos[arrBlob[x][y]-1].meanR += r;
+//                    arrayBlobPos[arrBlob[x][y]-1].meanG += g;
+//                    arrayBlobPos[arrBlob[x][y]-1].meanB += b;
 
                     if (arrayBlobPos[arrBlob[x][y]-1].maxX == -1 || x > arrayBlobPos[arrBlob[x][y]-1].maxX ){
                         arrayBlobPos[arrBlob[x][y]-1].maxX = x;
@@ -527,6 +544,7 @@ Uint32 Motion::blobAnalysis(SDL_Surface *finalImage, SDL_Surface *binaryImage, v
                 }
             }
         }
+
         //Pintamos rectangulos para encuadrar cada objeto
         Uint32 nPixelsBlob = 0;
         for (int i=0; i < nObj; i++){
@@ -540,9 +558,10 @@ Uint32 Motion::blobAnalysis(SDL_Surface *finalImage, SDL_Surface *binaryImage, v
                     nPixelsBlob = (arrayBlobPos[i].maxX - arrayBlobPos[i].minX + 1)
                                 * (arrayBlobPos[i].maxY - arrayBlobPos[i].minY + 1);
 
-                    arrayBlobPos[i].meanR = nPixelsBlob > 0 ? arrayBlobPos[i].meanR / nPixelsBlob : 0;
-                    arrayBlobPos[i].meanG = nPixelsBlob > 0 ? arrayBlobPos[i].meanG / nPixelsBlob : 0;
-                    arrayBlobPos[i].meanB = nPixelsBlob > 0 ? arrayBlobPos[i].meanB / nPixelsBlob : 0;
+                    //Calculating the mean color of the objects
+//                    arrayBlobPos[i].meanR = nPixelsBlob > 0 ? arrayBlobPos[i].meanR / nPixelsBlob : 0;
+//                    arrayBlobPos[i].meanG = nPixelsBlob > 0 ? arrayBlobPos[i].meanG / nPixelsBlob : 0;
+//                    arrayBlobPos[i].meanB = nPixelsBlob > 0 ? arrayBlobPos[i].meanB / nPixelsBlob : 0;
 
                     //if (arrayBlobPos[i].meanG < 120){
                         detectedObj++;

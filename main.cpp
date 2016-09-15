@@ -72,6 +72,7 @@ using namespace std;
 
 #define WIDTH 640
 #define HEIGHT 480
+#define BITS 24
 
 #define VIDEOWIDTH WIDTH
 #define VIDEOHEIGHT HEIGHT
@@ -100,6 +101,7 @@ static void *lock(void *data, void **p_pixels)
     SDL_LockMutex(cotx->mutex);
     SDL_LockSurface(cotx->surf);
     SDL_LockSurface(cotx->bckSurf);
+    //Copia los datos capturados al surface especificado cotx->surf
     *p_pixels = cotx->surf->pixels;
     return NULL; /* picture identifier, not needed here */
 }
@@ -111,7 +113,7 @@ static void unlock(void *data, void *id, void *const *p_pixels)
     struct ctx *cotx = (ctx *)data;
 
     /* VLC just rendered the video, but we can also render stuff */
-    //uint16_t *pixels = (uint16_t *)*p_pixels;
+    uint64_t *pixels = (uint64_t *)*p_pixels;
 //    int x, y;
 //
 //    for(y = 10; y < 40; y++)
@@ -122,25 +124,24 @@ static void unlock(void *data, void *id, void *const *p_pixels)
 //                pixels[y * VIDEOWIDTH + x] = 0x0;
 //
 
-//    if (nFrames > 0 && saveBackground == true){
-//        uint16_t *dstPixels = (uint16_t *)cotx->bckSurf->pixels;
-//        int i=0;
-//        while (i < cotx->surf->h * cotx->surf->w){
-//            dstPixels[i] = pixels[i]; //Solo si la surface es de 16 bits
-//            i++;
-//        }
-//        saveBackground = false;
-//    }
+    if (nFrames > 0 && saveBackground == true){
+        uint64_t *dstPixels = (uint64_t *)cotx->bckSurf->pixels;
+        int i=0;
+        const int totalPixels = cotx->surf->h * cotx->surf->w * cotx->surf->format->BytesPerPixel / sizeof(uint64_t);
+        while (i < totalPixels){
+            dstPixels[i] = pixels[i];
+            i++;
+        }
+        saveBackground = false;
+    }
 
         //*p_pixels = cotx->pixeldata;
 
-//    if (nFrames > 0 && cotx->bckSurf != NULL && cotx->surf != NULL){
-//
-//
-//        //Doing the diference of two images
-//        motionDetector->diferenceFilter(cotx->bckSurf, cotx->surf);
-//        //Joining areas with a minimal number of changes
-//        motionDetector->erosionFilter();
+    if (nFrames > 0 && cotx->bckSurf != NULL && cotx->surf != NULL){
+        //Doing the diference of two images
+        motionDetector->diferenceFilter(cotx->bckSurf, cotx->surf);
+        //Joining areas with a minimal number of changes
+        motionDetector->erosionFilter();
 //        //Updating the background dinamically every 1000 frames
 //        if (nFrames % 1000 == 0){
 //            motionDetector->backgroundSubtraction(cotx->bckSurf, cotx->surf);
@@ -148,14 +149,14 @@ static void unlock(void *data, void *id, void *const *p_pixels)
 //        //Showing the diferences in the screen
 //        //motionDetector->showDiffFilter(cotx->surf);
 //        //Showing the objects detected in the screen
-//        motionDetector->showBlobsFilter(cotx->surf);
+        motionDetector->showBlobsFilter(cotx->surf);
 //
 //
 ////        motionDetector->diferenceFilter(cotx->bckSurf, cotx->surf);
 ////        //motionDetector->medianFilter(3);
 ////        motionDetector->erosionFilter();
-////        motionDetector->showStepImage(cotx->surf);
-//    }
+//        motionDetector->showStepImage(cotx->surf);
+    }
 
     nFrames++;
 
@@ -233,7 +234,7 @@ int main(int argc, char *argv[])
 
     int options = SDL_ANYFORMAT | SDL_SWSURFACE;
 
-    screen = SDL_SetVideoMode(WIDTH, HEIGHT, 24, options);
+    screen = SDL_SetVideoMode(WIDTH, HEIGHT, BITS, options);
     if(!screen)
     {
         printf("cannot set video mode\n");
@@ -246,11 +247,11 @@ int main(int argc, char *argv[])
     ctx.mutex = SDL_CreateMutex();
 
     //Creating 16bit RGB565 Surfaces
-    ctx.surf    = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, 24,
-                                       bmask, gmask, rmask, 0);
+    ctx.surf    = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, BITS,
+                                       b24rmask, b24gmask, b24bmask, 0);
 
-    ctx.bckSurf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, 24,
-                                       rmask, gmask, bmask, 0);
+    ctx.bckSurf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEOWIDTH, VIDEOHEIGHT, BITS,
+                                       b24rmask, b24gmask, b24bmask, 0);
 
     /*
      *  Initialise libVLC
@@ -298,7 +299,7 @@ int main(int argc, char *argv[])
             break;
         case SDLK_RETURN:
             options ^= SDL_FULLSCREEN;
-            screen = SDL_SetVideoMode(WIDTH, HEIGHT, 24, options);
+            screen = SDL_SetVideoMode(WIDTH, HEIGHT, BITS, options);
             break;
         case ' ':
             pause = !pause;
